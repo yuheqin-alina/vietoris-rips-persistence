@@ -30,15 +30,41 @@
   header h1 { margin: 0 0 0.35rem; font-size: 1.5rem; font-weight: 600; }
   header p { margin: 0; max-width: 52rem; opacity: 0.92; font-size: 0.95rem; }
   .header-credits {
-    font-style: italic;
-    font-size: 0.72rem;
-    line-height: 1.35;
-    opacity: 0.88;
-    text-align: right;
-    max-width: 20rem;
     flex-shrink: 0;
+    align-self: center;
+    max-width: 15.5rem;
+    padding-left: 1rem;
+    border-left: 1px solid rgba(255, 255, 255, 0.22);
+    font-size: 0.68rem;
+    line-height: 1.5;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.78);
+    text-align: left;
   }
-  .header-credits p { margin: 0.15rem 0; }
+  .header-credits p {
+    margin: 0;
+    font-style: italic;
+  }
+  .header-credits p + p {
+    margin-top: 0.35rem;
+    font-style: normal;
+    font-size: 0.62rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.62);
+  }
+  .header-credits a {
+    color: #c5e4ff;
+    text-decoration: none;
+    font-style: normal;
+    font-weight: 500;
+  }
+  .header-credits a:hover {
+    color: #fff;
+    text-decoration: underline;
+  }
+  .header-credits .credits-seminar {
+    white-space: nowrap;
+  }
   header .header-more { display: none; }
   header a { color: #9fd4ff; }
   .panel a, .caption a, .explain a { color: #1a6bb5; }
@@ -68,9 +94,16 @@
       gap: 0.5rem;
     }
     .header-credits {
-      text-align: left;
+      align-self: flex-start;
       max-width: none;
-      font-size: 0.68rem;
+      padding-left: 0;
+      border-left: none;
+      padding-top: 0.35rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      font-size: 0.65rem;
+    }
+    .header-credits p + p {
+      font-size: 0.6rem;
     }
     header h1 { font-size: 1rem; margin-bottom: 0; }
     .header-main > p.header-intro { display: none; }
@@ -384,14 +417,19 @@
     </div>
     <div class="header-credits">
       <p>
-        Designed and developed by
-        <a href="https://yuheqin-alina.github.io/" target="_blank" rel="noopener noreferrer">Yuhe Qin</a>.
+        Designed &amp; developed by
+        <a href="https://yuheqin-alina.github.io/" target="_blank" rel="noopener noreferrer">Yuhe Qin</a>
       </p>
       <p>
-        Based on an idea and guidance from
-        <a href="https://yifeizhu.github.io/" target="_blank" rel="noopener noreferrer">Prof.&nbsp;Yifei Zhu</a>
-        for the
-        <a href="https://sustech-topology.github.io/acts/" target="_blank" rel="noopener noreferrer">Applied Topology Seminar</a>.
+        Idea &amp; guidance from
+        <a href="https://yifeizhu.github.io/" target="_blank" rel="noopener noreferrer">Prof. Yifei Zhu</a>
+        ·
+        <a
+          class="credits-seminar"
+          href="https://sustech-topology.github.io/acts/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >Applied Topology Seminar</a>
       </p>
     </div>
   </div>
