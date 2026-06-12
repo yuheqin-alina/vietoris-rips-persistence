@@ -8,7 +8,6 @@
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    padding-bottom: 4.75rem;
     font-family: "Segoe UI", system-ui, sans-serif;
     background: #f6f7f9;
     color: #222;
@@ -17,10 +16,29 @@
   header {
     background: #1a3a5c;
     color: #fff;
-    padding: 1.25rem 2rem;
+    padding: 1.25rem 1.5rem;
   }
+  .header-inner {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .header-main { flex: 1; min-width: 0; }
   header h1 { margin: 0 0 0.35rem; font-size: 1.5rem; font-weight: 600; }
   header p { margin: 0; max-width: 52rem; opacity: 0.92; font-size: 0.95rem; }
+  .header-credits {
+    font-style: italic;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    opacity: 0.92;
+    text-align: right;
+    max-width: 24rem;
+    flex-shrink: 0;
+  }
+  .header-credits p { margin: 0.3rem 0; }
   header .header-more { display: none; }
   header a { color: #9fd4ff; }
   .panel a, .caption a, .explain a { color: #1a6bb5; }
@@ -45,8 +63,17 @@
       grid-column: 1;
     }
     header { padding: 0.55rem 0.65rem; }
+    .header-inner {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .header-credits {
+      text-align: left;
+      max-width: none;
+      font-size: 0.76rem;
+    }
     header h1 { font-size: 1rem; margin-bottom: 0; }
-    header > p.header-intro { display: none; }
+    .header-main > p.header-intro { display: none; }
     header .header-more {
       display: block;
       margin-top: 0.35rem;
@@ -329,60 +356,45 @@
     .caption { font-size: 0.82rem; }
   }
   .btn-refresh:hover { background: #254a70; }
-  .site-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 20;
-    padding: 0.65rem 1.5rem 0.75rem;
-    font-size: 0.88rem;
-    color: #555;
-    line-height: 1.45;
-    background: #f6f7f9;
-    border-top: 1px solid #dde2e8;
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
-  }
-  .site-footer p {
-    margin: 0.2rem auto;
-    max-width: 1100px;
-  }
-  .site-footer a {
-    color: #1a6bb5;
-    text-decoration: none;
-  }
-  .site-footer a:hover { text-decoration: underline; }
-  @media (max-width: 960px) {
-    body { padding-bottom: 5.75rem; }
-    .site-footer {
-      padding: 0.55rem 0.65rem 0.65rem;
-      font-size: 0.78rem;
-      line-height: 1.4;
-    }
-  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Vietoris–Rips filtration</h1>
-  <p class="header-intro">
-    A point cloud in ℝ² and its
-    <a href="https://en.wikipedia.org/wiki/Vietoris%E2%80%93Rips_filtration" target="_blank" rel="noopener">Vietoris–Rips filtration</a>
-    (nested complexes built from disks of radius ε).
-    Increase ε to add
-    <a href="https://en.wikipedia.org/wiki/Simplicial_complex" target="_blank" rel="noopener">simplices</a>
-    when pairwise distances permit.
-  </p>
-  <details class="header-more">
-    <summary>About this demo</summary>
-    <p>
-      A random point cloud in ℝ² and its
-      <a href="https://en.wikipedia.org/wiki/Vietoris%E2%80%93Rips_filtration" target="_blank" rel="noopener">Vietoris–Rips filtration</a>
-      (nested complexes built from disks of radius ε).
-      Increasing ε adds simplices when pairwise distances permit.
-    </p>
-  </details>
+  <div class="header-inner">
+    <div class="header-main">
+      <h1>Vietoris–Rips filtration</h1>
+      <p class="header-intro">
+        A point cloud in ℝ² and its
+        <a href="https://en.wikipedia.org/wiki/Vietoris%E2%80%93Rips_filtration" target="_blank" rel="noopener">Vietoris–Rips filtration</a>
+        (nested complexes built from disks of radius ε).
+        Increase ε to add
+        <a href="https://en.wikipedia.org/wiki/Simplicial_complex" target="_blank" rel="noopener">simplices</a>
+        when pairwise distances permit.
+      </p>
+      <details class="header-more">
+        <summary>About this demo</summary>
+        <p>
+          A random point cloud in ℝ² and its
+          <a href="https://en.wikipedia.org/wiki/Vietoris%E2%80%93Rips_filtration" target="_blank" rel="noopener">Vietoris–Rips filtration</a>
+          (nested complexes built from disks of radius ε).
+          Increasing ε adds simplices when pairwise distances permit.
+        </p>
+      </details>
+    </div>
+    <div class="header-credits">
+      <p>
+        Designed and developed by
+        <a href="https://yuheqin-alina.github.io/" target="_blank" rel="noopener noreferrer">Yuhe Qin</a>.
+      </p>
+      <p>
+        Based on an idea and guidance from
+        <a href="https://yifeizhu.github.io/" target="_blank" rel="noopener noreferrer">Prof.&nbsp;Yifei Zhu</a>
+        for the
+        <a href="https://sustech-topology.github.io/acts/" target="_blank" rel="noopener noreferrer">Applied Topology Seminar</a>.
+      </p>
+    </div>
+  </div>
 </header>
 
 <main>
@@ -461,19 +473,6 @@
   </section>
 
 </main>
-
-<footer class="site-footer">
-  <p>
-    Designed and developed by
-    <a href="https://yuheqin-alina.github.io/" target="_blank" rel="noopener noreferrer">Yuhe Qin</a>.
-  </p>
-  <p>
-    Based on an idea and guidance from
-    <a href="https://yifeizhu.github.io/" target="_blank" rel="noopener noreferrer">Prof.&nbsp;Yifei Zhu</a>
-    for the
-    <a href="https://sustech-topology.github.io/acts/" target="_blank" rel="noopener noreferrer">Applied Topology Seminar</a>.
-  </p>
-</footer>
 
 <script>
 let pointCount = 15;
