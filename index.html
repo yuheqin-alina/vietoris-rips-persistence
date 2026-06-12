@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vietoris–Rips Filtration &amp; Persistence Barcode</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: #f6f7f9;
+    color: #222;
+    line-height: 1.5;
+  }
+  header {
+    background: #1a3a5c;
+    color: #fff;
+    padding: 1.25rem 2rem;
+  }
+  header h1 { margin: 0 0 0.35rem; font-size: 1.5rem; font-weight: 600; }
+  header p { margin: 0; max-width: 52rem; opacity: 0.92; font-size: 0.95rem; }
+  header .header-more { display: none; }
+  header a { color: #9fd4ff; }
+  .panel a, .caption a, .explain a { color: #1a6bb5; }
+  main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1rem;
+    padding: 1rem 1.5rem 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .panel-vr { grid-column: 1; }
+  .panel-bc { grid-column: 2; }
+  @media (max-width: 960px) {
+    main {
+      grid-template-columns: 1fr;
+      padding: 0.35rem;
+      gap: 0.45rem;
+    }
+    .panel-vr,
+    .panel-bc {
+      grid-column: 1;
+    }
+    header { padding: 0.55rem 0.65rem; }
+    header h1 { font-size: 1rem; margin-bottom: 0; }
+    header > p.header-intro { display: none; }
+    header .header-more {
+      display: block;
+      margin-top: 0.35rem;
+      font-size: 0.78rem;
+      opacity: 0.92;
+    }
+    header .header-more > summary {
+      cursor: pointer;
+      color: #9fd4ff;
+      font-weight: 600;
+      list-style: none;
+    }
+    header .header-more > summary::-webkit-details-marker { display: none; }
+    header .header-more p { margin: 0.35rem 0 0; line-height: 1.35; }
+  }
+  @media (min-width: 961px) {
+    header .header-more { display: none; }
+  }
+  .panel {
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #dde2e8;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    min-width: 0;
+  }
+  @media (max-width: 960px) {
+    .panel { padding: 0.5rem; }
+    .panel h2 { font-size: 0.95rem; margin-bottom: 0.15rem; }
+    .panel .subtitle { display: none; }
+  }
+  .panel h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1.1rem;
+    color: #1a3a5c;
+  }
+  .panel .subtitle {
+    margin: 0 0 0.75rem;
+    font-size: 0.85rem;
+    color: #555;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    max-width: var(--viz-canvas-size, 400px);
+    height: auto;
+    aspect-ratio: 1;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    background: #fff;
+  }
+  .canvas-wrap {
+    width: 100%;
+    max-width: var(--viz-canvas-size, 400px);
+    margin: 0 auto;
+  }
+  @media (max-width: 960px) {
+    .canvas-wrap {
+      width: 100%;
+      max-width: 100%;
+    }
+    canvas {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      aspect-ratio: 1;
+    }
+  }
+  .anim-row {
+    margin: 0 0 1rem;
+    font-size: 0.85rem;
+  }
+  .anim-row label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: normal;
+    cursor: pointer;
+  }
+  #scaleSlider:disabled,
+  #scaleInput:disabled { opacity: 0.5; }
+  .caption {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: #444;
+  }
+  .caption strong { color: #1a3a5c; }
+  .vr-controls {
+    padding: 0.75rem 0.85rem;
+    background: #f8fafc;
+    border: 1px solid #e8ecf0;
+    border-radius: 6px;
+    margin-top: 0.65rem;
+  }
+  .vr-controls h3 {
+    margin: 0 0 0.55rem;
+    font-size: 0.92rem;
+    color: #1a3a5c;
+  }
+  @media (max-width: 960px) {
+    .vr-controls {
+      margin-top: 0.35rem;
+      padding: 0.5rem 0.6rem;
+    }
+    .vr-controls h3 {
+      margin-bottom: 0.35rem;
+      font-size: 0.85rem;
+    }
+    .vr-controls .btn-refresh {
+      margin-bottom: 0.45rem;
+      min-height: 2.35rem;
+      padding: 0.4rem 0.6rem;
+      font-size: 0.88rem;
+    }
+    .slider-row {
+      margin: 0.2rem 0 0.15rem;
+    }
+    .slider-row input[type="number"] {
+      min-height: 2.25rem;
+      width: 3.8rem;
+      font-size: 0.9rem;
+    }
+    #controls label { font-size: 0.82rem; }
+    .control-hint {
+      margin-bottom: 0.45rem;
+      font-size: 0.75rem;
+    }
+    .anim-row { margin: 0; font-size: 0.82rem; }
+    .panel-vr > .caption,
+    .panel-bc > .caption { display: none; }
+  }
+  .legend {
+    font-size: 0.85rem;
+    margin: 0.65rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.85rem;
+  }
+  .legend li { display: flex; align-items: center; gap: 0.45rem; }
+  .swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    display: inline-block;
+  }
+  .barcode-status {
+    margin: 0.5rem 0 0;
+    font-size: 0.82rem;
+    color: #666;
+    min-height: 1.2em;
+  }
+  .barcode-status.error { color: #b42318; }
+  #canvasBC { cursor: default; }
+  #canvasBC.hit-active { cursor: pointer; }
+  .bc-tooltip {
+    position: fixed;
+    z-index: 20;
+    max-width: 18rem;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.8rem;
+    line-height: 1.35;
+    color: #1f2937;
+    background: #fff;
+    border: 1px solid #dde2e8;
+    border-radius: 6px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    pointer-events: none;
+    display: none;
+  }
+  #controls label { font-weight: 600; font-size: 0.9rem; }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.35rem 0 0.25rem;
+  }
+  .slider-row input[type="range"] {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    height: 1.75rem;
+    touch-action: pan-y;
+    cursor: pointer;
+  }
+  .slider-row input[type="range"]::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+  }
+  .slider-row input[type="range"]::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 50%;
+    background: #1a3a5c;
+  }
+  .slider-row input[type="number"] {
+    width: 4.2rem;
+    padding: 0.45rem 0.4rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-align: right;
+    min-height: 2.5rem;
+  }
+  @media (max-width: 960px) {
+    .slider-row input[type="range"] {
+      height: 2.25rem;
+    }
+    .slider-row input[type="range"]::-webkit-slider-thumb {
+      width: 26px;
+      height: 26px;
+    }
+    .slider-row input[type="range"]::-moz-range-thumb {
+      width: 26px;
+      height: 26px;
+    }
+    .slider-row input[type="number"] {
+      width: 4.5rem;
+      min-height: 2.75rem;
+    }
+  }
+  .control-hint {
+    margin: 0 0 0.85rem;
+    font-size: 0.82rem;
+    color: #888;
+  }
+  .control-hint:last-child { margin-bottom: 0; }
+  .vr-controls .anim-row { margin: 0.25rem 0 0; }
+  .vr-controls .btn-refresh { margin-bottom: 0.85rem; }
+  .model-row {
+    margin-bottom: 0.75rem;
+  }
+  .model-row label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+  .model-select {
+    width: 100%;
+    padding: 0.45rem 0.5rem;
+    font-size: 0.9rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    min-height: 2.5rem;
+  }
+  @media (max-width: 960px) {
+    .model-select { min-height: 2.35rem; font-size: 0.85rem; }
+  }
+  @media (max-width: 960px) {
+    body { overflow-x: hidden; }
+  }
+  .btn-refresh {
+    display: block;
+    width: 100%;
+    margin: 0 0 1rem;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #fff;
+    background: #1a3a5c;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    min-height: 2.75rem;
+    touch-action: manipulation;
+  }
+  @media (max-width: 960px) {
+    .btn-refresh {
+      min-height: 3rem;
+      font-size: 1rem;
+    }
+    .anim-row label {
+      min-height: 2.5rem;
+      padding: 0.15rem 0;
+    }
+    .caption { font-size: 0.82rem; }
+  }
+  .btn-refresh:hover { background: #254a70; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Vietoris–Rips filtration</h1>
+  <p class="header-intro">
+    A point cloud in ℝ² and its
+    <a href="https://en.wikipedia.org/wiki/Vietoris%E2%80%93Rips_filtration" target="_blank" rel="noopener">Vietoris–Rips filtration</a>
+    (nested complexes built from disks of radius ε).
+    Increase ε to add
+    <a href="https://en.wikipedia.org/wiki/Simplicial_complex" target="_blank" rel="noopener">simplices</a>
+    when pairwise distances permit.
+  </p>
+  <details class="header-more">
+    <summary>About this demo</summary>
+    <p>
+      A random point cloud in ℝ² and its
+      <a href="https://en.wikipedia.org/wiki/Vietoris%E2%80%93Rips_filtration" target="_blank" rel="noopener">Vietoris–Rips filtration</a>
+      (nested complexes built from disks of radius ε).
+      Increasing ε adds simplices when pairwise distances permit.
+    </p>
+  </details>
+</header>
+
+<main>
+  <section class="panel panel-vr">
+    <h2>Rips complex at filtration ε</h2>
+    <p class="subtitle">Sublevel set of the filtration parameter (disk radius)</p>
+    <div class="canvas-wrap">
+      <canvas id="canvasVR" width="400" height="400"></canvas>
+    </div>
+
+    <div class="vr-controls" id="controls">
+      <h3>Filtration controls</h3>
+      <div class="model-row">
+        <label for="modelSelect">Point cloud model</label>
+        <select id="modelSelect" class="model-select">
+          <option value="random">Random points</option>
+          <option value="ring">Single ring</option>
+          <option value="rings-separated">Three separated rings</option>
+          <option value="two-rows">Two parallel rows</option>
+          <option value="figure-eight">Figure eight</option>
+          <option value="grid">Grid</option>
+          <option value="cluster">Tight cluster</option>
+        </select>
+      </div>
+      <button type="button" id="loadModelBtn" class="btn-refresh">Load model</button>
+      <label for="scaleSlider">Filtration ε (disk radius)</label>
+      <div class="slider-row">
+        <input type="range" id="scaleSlider" value="0">
+        <input type="number" id="scaleInput" min="0" step="0.1" value="0" aria-label="Filtration epsilon">
+      </div>
+      <p class="control-hint">Range <span id="scaleRangeHint">0–200</span> (depends on point cloud)</p>
+      <label for="pointCountSlider">Number of points</label>
+      <div class="slider-row">
+        <input type="range" id="pointCountSlider" min="5" max="30" step="1" value="15">
+        <input type="number" id="pointCountInput" min="5" max="30" step="1" value="15" aria-label="Number of points">
+      </div>
+      <p class="control-hint">5–30 vertices</p>
+      <div class="anim-row">
+        <label>
+          <input type="checkbox" id="animateEpsilon">
+          Animate ε (auto-increase)
+        </label>
+      </div>
+    </div>
+
+    <p class="caption">
+      <strong>Vertices</strong> — sample points.
+      <strong>Disks</strong> B(p<sub>i</sub>, ε): a
+      <strong>1-simplex</strong> (edge) joins p<sub>i</sub>, p<sub>j</sub> when
+      ‖p<sub>i</sub> − p<sub>j</sub>‖ ≤ 2ε; a
+      <strong>2-simplex</strong> (triangle) appears when all three pairwise edges exist; a
+      <strong>3-simplex</strong> (tetrahedron on four vertices) appears when all six pairwise edges exist.
+      Each resample uses the selected <strong>point cloud model</strong>.
+    </p>
+  </section>
+
+  <section class="panel panel-bc">
+    <h2>Persistence barcode</h2>
+    <p class="subtitle">Intervals from GUDHI (Z₂, full Rips filtration)</p>
+    <div class="canvas-wrap">
+      <canvas id="canvasBC" width="400" height="400"></canvas>
+    </div>
+    <ul class="legend">
+      <li><span class="swatch" style="background:#3388dd"></span> H₀</li>
+      <li><span class="swatch" style="background:#22aa44"></span> H₁</li>
+      <li><span class="swatch" style="background:#9444cc"></span> H₂</li>
+      <li><span class="swatch" style="background:#e67e22; width:3px"></span> current ε</li>
+    </ul>
+    <p id="barcodeStatus" class="barcode-status">Computing persistence…</p>
+    <div id="bcTooltip" class="bc-tooltip" role="tooltip"></div>
+    <p class="caption">
+      Each bar is an interval [birth, death) in disk radius ε.
+      Brighter bars are <strong>alive</strong> at the current ε on the left.
+      Requires the GUDHI server (<code>python server.py</code>).
+    </p>
+  </section>
+
+</main>
+
+<script>
+let pointCount = 15;
+let pointCloudModel = "random";
+const MIN_POINTS = 5;
+const MAX_POINTS = 30;
+const MIN_RADIUS = 0;
+const SCALE_STEP = 0.1;
+const SCALE_DECIMALS = 1;
+const DATA_SPAN = 100;
+const VR_MARGIN = 32;
+const ANIM_PERIOD_MS = 12000;
+const CLUSTER_SPAN = 12;
+const points = [];
+const canvasVR = document.getElementById("canvasVR");
+const ctxVR = canvasVR.getContext("2d");
+const canvasBC = document.getElementById("canvasBC");
+const ctxBC = canvasBC.getContext("2d");
+const barcodeStatus = document.getElementById("barcodeStatus");
+const bcTooltip = document.getElementById("bcTooltip");
+
+const BC_COLORS = ["#3388dd", "#22aa44", "#9444cc"];
+const PERSIST_EPS = 1e-9;
+
+let persistence = { intervals: [], maxFilt: 1 };
+let barcodeHitTargets = [];
+let hoveredInterval = null;
+let lastHoverKey = "";
+let view = { sx: 1, sy: 1, ox: VR_MARGIN, oy: VR_MARGIN };
+
+function dist(i, j) {
+  const dx = points[i].x - points[j].x;
+  const dy = points[i].y - points[j].y;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function edgeKey(i, j) {
+  return i < j ? `${i},${j}` : `${j},${i}`;
+}
+
+function triKey(i, j, k) {
+  return [i, j, k].sort((a, b) => a - b).join(",");
+}
+
+function filt(i, j) {
+  return dist(i, j) / 2;
+}
+
+let maxFilt = 0;
+
+function recomputeMaxFilt() {
+  maxFilt = 0;
+  for (let i = 0; i < pointCount; i++) {
+    for (let j = i + 1; j < pointCount; j++) {
+      maxFilt = Math.max(maxFilt, filt(i, j));
+    }
+  }
+}
+
+function computeEdges(radius) {
+  const r = radius;
+  const edges = [];
+  for (let i = 0; i < pointCount; i++) {
+    for (let j = i + 1; j < pointCount; j++) {
+      if (dist(i, j) <= 2 * r) edges.push([i, j]);
+    }
+  }
+  return edges;
+}
+
+function computeTriangles(radius) {
+  const edges = computeEdges(radius);
+  const edgeSet = new Set(edges.map(([i, j]) => edgeKey(i, j)));
+  const triangles = [];
+  for (let i = 0; i < pointCount; i++) {
+    for (let j = i + 1; j < pointCount; j++) {
+      for (let k = j + 1; k < pointCount; k++) {
+        if (
+          edgeSet.has(edgeKey(i, j)) &&
+          edgeSet.has(edgeKey(i, k)) &&
+          edgeSet.has(edgeKey(j, k))
+        ) {
+          triangles.push([i, j, k]);
+        }
+      }
+    }
+  }
+  return triangles;
+}
+
+function compute3Simplices(radius) {
+  const edgeSet = new Set(
+    computeEdges(radius).map(([i, j]) => edgeKey(i, j))
+  );
+  const hasEdge = (a, b) => edgeSet.has(edgeKey(a, b));
+  const simplices = [];
+  for (let i = 0; i < pointCount; i++) {
+    for (let j = i + 1; j < pointCount; j++) {
+      for (let k = j + 1; k < pointCount; k++) {
+        for (let l = k + 1; l < pointCount; l++) {
+          if (
+            hasEdge(i, j) &&
+            hasEdge(i, k) &&
+            hasEdge(i, l) &&
+            hasEdge(j, k) &&
+            hasEdge(j, l) &&
+            hasEdge(k, l)
+          ) {
+            simplices.push([i, j, k, l]);
+          }
+        }
+      }
+    }
+  }
+  return simplices;
+}
+
+function convexHullScreen(indices) {
+  const pts = indices.map((idx) => {
+    const s = screenPoint(idx);
+    return { x: s.x, y: s.y };
+  });
+  if (pts.length <= 2) return pts;
+  const sorted = [...pts].sort((a, b) => a.x - b.x || a.y - b.y);
+  const cross = (o, a, b) =>
+    (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+  const lower = [];
+  for (const p of sorted) {
+    while (
+      lower.length >= 2 &&
+      cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0
+    ) {
+      lower.pop();
+    }
+    lower.push(p);
+  }
+  const upper = [];
+  for (let i = sorted.length - 1; i >= 0; i--) {
+    const p = sorted[i];
+    while (
+      upper.length >= 2 &&
+      cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0
+    ) {
+      upper.pop();
+    }
+    upper.push(p);
+  }
+  upper.pop();
+  lower.pop();
+  return lower.concat(upper);
+}
+
+function fillConvexHull(indices, fillStyle, strokeStyle, lineWidth) {
+  const hull = convexHullScreen(indices);
+  if (hull.length < 3) return;
+  ctxVR.fillStyle = fillStyle;
+  ctxVR.strokeStyle = strokeStyle;
+  ctxVR.lineWidth = lineWidth;
+  ctxVR.beginPath();
+  ctxVR.moveTo(hull[0].x, hull[0].y);
+  for (let t = 1; t < hull.length; t++) {
+    ctxVR.lineTo(hull[t].x, hull[t].y);
+  }
+  ctxVR.closePath();
+  ctxVR.fill();
+  ctxVR.stroke();
+}
+
+function fitViewToCloud() {
+  if (points.length === 0) return;
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const p of points) {
+    minX = Math.min(minX, p.x);
+    minY = Math.min(minY, p.y);
+    maxX = Math.max(maxX, p.x);
+    maxY = Math.max(maxY, p.y);
+  }
+  const spanX = Math.max(maxX - minX, 1e-6);
+  const spanY = Math.max(maxY - minY, 1e-6);
+  const w = canvasVR.width - 2 * VR_MARGIN;
+  const h = canvasVR.height - 2 * VR_MARGIN;
+  const s = Math.min(w / spanX, h / spanY) * 0.9;
+  view.sx = s;
+  view.sy = s;
+  view.ox = VR_MARGIN + (w - spanX * s) / 2 - minX * s;
+  view.oy = VR_MARGIN + (h - spanY * s) / 2 - minY * s;
+}
+
+function screenScale() {
+  return (view.sx + view.sy) / 2;
+}
+
+function screenPoint(i) {
+  const p = points[i];
+  return { x: p.x * view.sx + view.ox, y: p.y * view.sy + view.oy };
+}
+
+function screenRadius(r) {
+  return r * screenScale();
+}
+
+function simplex4Key(i, j, k, l) {
+  const a = [i, j, k, l].sort((x, y) => x - y);
+  return `${a[0]},${a[1]},${a[2]},${a[3]}`;
+}
+
+function intervalsByDim(intervals) {
+  const byDim = { 0: [], 1: [], 2: [] };
+  for (const iv of intervals) {
+    if (byDim[iv.dim] != null) byDim[iv.dim].push(iv);
+  }
+  for (const dim of [0, 1, 2]) {
+    byDim[dim].sort((a, b) => {
+      const db = a.birth - b.birth;
+      if (Math.abs(db) > PERSIST_EPS) return db;
+      return (a.death ?? 1e30) - (b.death ?? 1e30);
+    });
+  }
+  return byDim;
+}
+
+function aliveAtEps(iv, eps) {
+  return (
+    iv.birth <= eps + PERSIST_EPS &&
+    (iv.death == null || iv.death > eps + PERSIST_EPS)
+  );
+}
+
+function intervalHoverKey(iv) {
+  if (!iv) return "";
+  const dv = iv.deathVerts ? iv.deathVerts.join("-") : "inf";
+  return `${iv.dim}:${iv.birthVerts.join("-")}:${dv}`;
+}
+
+function canvasCoords(canvas, clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const sx = canvas.width / rect.width;
+  const sy = canvas.height / rect.height;
+  return {
+    x: (clientX - rect.left) * sx,
+    y: (clientY - rect.top) * sy,
+  };
+}
+
+function hitTestBarcode(mx, my) {
+  for (let i = barcodeHitTargets.length - 1; i >= 0; i--) {
+    const h = barcodeHitTargets[i];
+    if (mx >= h.x0 && mx <= h.x1 && my >= h.y0 && my <= h.y1) return h.interval;
+  }
+  return null;
+}
+
+function findCycleEdgesAtBirth(a, b, birthEps) {
+  const adj = Array.from({ length: pointCount }, () => []);
+  for (let i = 0; i < pointCount; i++) {
+    for (let j = i + 1; j < pointCount; j++) {
+      if (filt(i, j) <= birthEps + PERSIST_EPS) {
+        adj[i].push(j);
+        adj[j].push(i);
+      }
+    }
+  }
+  const parent = Array(pointCount).fill(-1);
+  const queue = [a];
+  parent[a] = a;
+  while (queue.length) {
+    const u = queue.shift();
+    if (u === b) break;
+    for (const v of adj[u]) {
+      if (parent[v] !== -1) continue;
+      if ((u === a && v === b) || (u === b && v === a)) continue;
+      parent[v] = u;
+      queue.push(v);
+    }
+  }
+  const edges = [];
+  if (parent[b] === -1) {
+    edges.push([Math.min(a, b), Math.max(a, b)]);
+    return edges;
+  }
+  let cur = b;
+  while (cur !== a) {
+    const p = parent[cur];
+    edges.push([Math.min(cur, p), Math.max(cur, p)]);
+    cur = p;
+  }
+  edges.push([Math.min(a, b), Math.max(a, b)]);
+  return edges;
+}
+
+function tetraEdges(verts) {
+  const out = [];
+  for (let i = 0; i < verts.length; i++) {
+    for (let j = i + 1; j < verts.length; j++) {
+      out.push([Math.min(verts[i], verts[j]), Math.max(verts[i], verts[j])]);
+    }
+  }
+  return out;
+}
+
+function highlightsFromInterval(iv) {
+  if (!iv) return null;
+  const h = {
+    dim: iv.dim,
+    vertices: [],
+    edges: [],
+    birthTriangle: null,
+    deathTriangle: null,
+    deathTetra: null,
+  };
+  const bv = iv.birthVerts || [];
+  const dv = iv.deathVerts || null;
+
+  if (iv.dim === 0) {
+    if (bv.length === 1) h.vertices.push(bv[0]);
+    if (dv && dv.length === 2) h.edges.push([Math.min(dv[0], dv[1]), Math.max(dv[0], dv[1])]);
+  } else if (iv.dim === 1) {
+    if (bv.length === 2) {
+      const cycleEdges = findCycleEdgesAtBirth(bv[0], bv[1], iv.birth);
+      h.edges.push(...cycleEdges);
+      const cycleVerts = new Set();
+      for (const [a, b] of cycleEdges) {
+        cycleVerts.add(a);
+        cycleVerts.add(b);
+      }
+      h.vertices.push(...cycleVerts);
+    }
+  } else if (iv.dim === 2) {
+    if (bv.length === 3) {
+      h.birthTriangle = [...bv].sort((x, y) => x - y);
+      h.vertices.push(...h.birthTriangle);
+    }
+    if (dv && dv.length === 4) {
+      h.deathTetra = [...dv].sort((x, y) => x - y);
+      for (const v of h.deathTetra) {
+        if (!h.vertices.includes(v)) h.vertices.push(v);
+      }
+      h.edges.push(...tetraEdges(h.deathTetra));
+    }
+  }
+  return h;
+}
+
+function edgeMatches(e, i, j) {
+  const a = Math.min(i, j);
+  const b = Math.max(i, j);
+  return e[0] === a && e[1] === b;
+}
+
+function triMatches(tri, i, j, k) {
+  const key = triKey(i, j, k);
+  return triKey(...tri) === key;
+}
+
+function formatInterval(iv) {
+  const fmt = (x) => (x == null ? "∞" : x.toFixed(1));
+  const bv = iv.birthVerts ? iv.birthVerts.join(", ") : "?";
+  const dv = iv.deathVerts ? iv.deathVerts.join(", ") : "∞";
+  if (iv.dim === 0) {
+    return `H₀ merge: vertex (${bv}) dies at edge (${dv}). ε ∈ [${fmt(iv.birth)}, ${fmt(iv.death)}).`;
+  }
+  if (iv.dim === 1) {
+    return `H₁ loop: born at edge (${bv}), dies at triangle (${dv}). ε ∈ [${fmt(iv.birth)}, ${fmt(iv.death)}).`;
+  }
+  return (
+    `H₂ void: purple triangle = birth (${bv}); ` +
+    `purple hull + 6 edges = death 4-clique (${dv}). ε ∈ [${fmt(iv.birth)}, ${fmt(iv.death)}).`
+  );
+}
+
+function showBcTooltip(iv, clientX, clientY) {
+  if (!iv) {
+    bcTooltip.style.display = "none";
+    return;
+  }
+  bcTooltip.textContent = formatInterval(iv);
+  bcTooltip.style.display = "block";
+  bcTooltip.style.left = `${clientX + 14}px`;
+  bcTooltip.style.top = `${clientY + 14}px`;
+}
+
+function hideBcTooltip() {
+  bcTooltip.style.display = "none";
+}
+
+function drawBarcode({ intervals, maxFilt: mFilt }, currentEps, hoverIv) {
+  const m = Math.max(mFilt || maxFilt, 1e-6);
+  const eps = clamp(currentEps, 0, m);
+  const padL = 48;
+  const padR = 12;
+  const padT = 32;
+  const padB = 40;
+  const plotW = canvasBC.width - padL - padR;
+  const plotH = canvasBC.height - padT - padB;
+  const toX = (v) => padL + plotW * (clamp(v, 0, m) / m);
+
+  ctxBC.fillStyle = "#fff";
+  ctxBC.fillRect(0, 0, canvasBC.width, canvasBC.height);
+
+  const byDim = intervalsByDim(intervals);
+  const dims = [0, 1, 2];
+  const bandH = plotH / dims.length;
+  const rowGap = 1;
+  const counts = { 0: 0, 1: 0, 2: 0 };
+  barcodeHitTargets = [];
+
+  ctxBC.strokeStyle = "#dde2e8";
+  ctxBC.lineWidth = 1;
+  ctxBC.beginPath();
+  ctxBC.moveTo(padL, padT);
+  ctxBC.lineTo(padL, padT + plotH);
+  ctxBC.lineTo(padL + plotW, padT + plotH);
+  ctxBC.stroke();
+
+  dims.forEach((dim, bandIdx) => {
+    const bandTop = padT + bandH * bandIdx;
+    const bandBottom = bandTop + bandH;
+    const yMid = bandTop + bandH / 2;
+    const rows = byDim[dim];
+    const rowCount = Math.max(rows.length, 1);
+    const innerPad = 3;
+    const usableH = bandH - 2 * innerPad - rowGap * Math.max(0, rowCount - 1);
+    const barH = Math.max(2, usableH / rowCount);
+
+    ctxBC.fillStyle = "#1a3a5c";
+    ctxBC.font = "12px Segoe UI, system-ui, sans-serif";
+    ctxBC.textAlign = "right";
+    ctxBC.textBaseline = "middle";
+    ctxBC.fillText(`H${dim}`, padL - 8, yMid);
+
+    ctxBC.strokeStyle = "#eef1f4";
+    ctxBC.beginPath();
+    ctxBC.moveTo(padL, bandBottom);
+    ctxBC.lineTo(padL + plotW, bandBottom);
+    ctxBC.stroke();
+
+    rows.forEach((iv, rowIdx) => {
+      const x0 = toX(iv.birth);
+      const x1 = iv.death == null ? padL + plotW : toX(iv.death);
+      const alive = aliveAtEps(iv, eps);
+      if (alive) counts[dim]++;
+
+      const y0 = bandTop + innerPad + rowIdx * (barH + rowGap);
+      const isHover = hoverIv && intervalHoverKey(hoverIv) === intervalHoverKey(iv);
+
+      barcodeHitTargets.push({
+        interval: iv,
+        x0,
+        y0,
+        x1,
+        y1: y0 + barH,
+      });
+
+      ctxBC.fillStyle = BC_COLORS[dim];
+      ctxBC.globalAlpha = alive ? 1 : 0.35;
+      ctxBC.fillRect(x0, y0, Math.max(2, x1 - x0), barH);
+      ctxBC.globalAlpha = 1;
+      ctxBC.strokeStyle = isHover ? "#1a3a5c" : BC_COLORS[dim];
+      ctxBC.lineWidth = isHover ? 2.5 : alive ? 1.25 : 0.75;
+      ctxBC.strokeRect(x0, y0, Math.max(2, x1 - x0), barH);
+    });
+  });
+
+  const epsX = toX(eps);
+  ctxBC.strokeStyle = "#e67e22";
+  ctxBC.lineWidth = 2;
+  ctxBC.setLineDash([6, 4]);
+  ctxBC.beginPath();
+  ctxBC.moveTo(epsX, padT);
+  ctxBC.lineTo(epsX, padT + plotH);
+  ctxBC.stroke();
+  ctxBC.setLineDash([]);
+
+  ctxBC.fillStyle = "#666";
+  ctxBC.font = "11px Segoe UI, system-ui, sans-serif";
+  ctxBC.textAlign = "center";
+  for (let t = 0; t <= 4; t++) {
+    const v = (m * t) / 4;
+    ctxBC.fillText(v.toFixed(1), toX(v), padT + plotH + 16);
+  }
+  ctxBC.textAlign = "left";
+  ctxBC.fillText("ε (disk radius)", padL + plotW / 2 - 34, canvasBC.height - 8);
+  ctxBC.fillText(
+    `alive at ε=${eps.toFixed(SCALE_DECIMALS)}: H₀=${counts[0]}, H₁=${counts[1]}, H₂=${counts[2]}`,
+    padL,
+    16
+  );
+}
+
+async function fetchPersistence() {
+  barcodeStatus.classList.remove("error");
+  barcodeStatus.textContent = "Computing persistence with GUDHI…";
+  loadModelBtn.disabled = true;
+
+  try {
+    const res = await fetch("/api/persistence", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        points: points.slice(0, pointCount).map((p) => ({ x: p.x, y: p.y })),
+      }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    persistence = await res.json();
+    barcodeStatus.textContent = `GUDHI: ${persistence.intervals.length} intervals (max ε ≈ ${Math.round(persistence.maxFilt)})`;
+  } catch (err) {
+    persistence = { intervals: [], maxFilt: maxFilt };
+    barcodeStatus.classList.add("error");
+    barcodeStatus.textContent =
+      "Could not reach GUDHI server. Run: python server.py then open http://127.0.0.1:8080";
+    console.error(err);
+  } finally {
+    loadModelBtn.disabled = false;
+  }
+}
+
+function drawSegmentHighlight(i, j, color, width, dashed) {
+  const a = screenPoint(i);
+  const b = screenPoint(j);
+  ctxVR.strokeStyle = color;
+  ctxVR.lineWidth = width;
+  ctxVR.setLineDash(dashed ? [7, 5] : []);
+  ctxVR.beginPath();
+  ctxVR.moveTo(a.x, a.y);
+  ctxVR.lineTo(b.x, b.y);
+  ctxVR.stroke();
+  ctxVR.setLineDash([]);
+}
+
+function drawFilledTriangleHighlight(i, j, k, fill, stroke, width, dashed) {
+  const si = screenPoint(i);
+  const sj = screenPoint(j);
+  const sk = screenPoint(k);
+  ctxVR.fillStyle = fill;
+  ctxVR.strokeStyle = stroke;
+  ctxVR.lineWidth = width;
+  ctxVR.setLineDash(dashed ? [7, 5] : []);
+  ctxVR.beginPath();
+  ctxVR.moveTo(si.x, si.y);
+  ctxVR.lineTo(sj.x, sj.y);
+  ctxVR.lineTo(sk.x, sk.y);
+  ctxVR.closePath();
+  ctxVR.fill();
+  ctxVR.stroke();
+  ctxVR.setLineDash([]);
+}
+
+function drawH2Overlay(hi, triangles, simplices3) {
+  if (!hi || hi.dim !== 2) return;
+
+  const birthFill = "rgba(148, 68, 204, 0.52)";
+  const birthStroke = "#5b21b6";
+  const deathFill = "rgba(109, 40, 217, 0.28)";
+  const deathStroke = "#7c3aed";
+  const deathEdgeStroke = "#6d28d9";
+
+  if (hi.birthTriangle) {
+    const [i, j, k] = hi.birthTriangle;
+    const inComplex = triangles.some(([a, b, c]) => triMatches(hi.birthTriangle, a, b, c));
+    drawFilledTriangleHighlight(
+      i,
+      j,
+      k,
+      birthFill,
+      birthStroke,
+      3.5,
+      !inComplex
+    );
+  }
+
+  if (hi.deathTetra) {
+    const inComplex = simplices3.some(([a, b, c, d]) =>
+      simplex4Key(...hi.deathTetra) === simplex4Key(a, b, c, d)
+    );
+    fillConvexHull(
+      hi.deathTetra,
+      deathFill,
+      deathStroke,
+      inComplex ? 3 : 2.5
+    );
+    for (const [a, b] of tetraEdges(hi.deathTetra)) {
+      drawSegmentHighlight(a, b, deathEdgeStroke, 4, !inComplex);
+    }
+  }
+
+  const pr = Math.min(5, Math.max(3.5, 1.1 * screenScale()));
+  for (const v of hi.vertices) {
+    const s = screenPoint(v);
+    ctxVR.fillStyle = "#a855f7";
+    ctxVR.strokeStyle = "#581c87";
+    ctxVR.lineWidth = 2;
+    ctxVR.beginPath();
+    ctxVR.arc(s.x, s.y, pr, 0, 2 * Math.PI);
+    ctxVR.fill();
+    ctxVR.stroke();
+  }
+}
+
+function drawVR(edges, triangles, simplices3, radius, highlight) {
+  const r = screenRadius(radius);
+  const hi = highlight || null;
+  const hiEdges = hi ? new Set(hi.edges.map(([a, b]) => edgeKey(a, b))) : null;
+  const hiVerts = hi ? new Set(hi.vertices) : null;
+  const hiBirthTri = hi && hi.dim !== 2 ? hi.birthTriangle : null;
+  const hiDeathTri = hi ? hi.deathTriangle : null;
+  const hiTetra = hi && hi.dim !== 2 ? hi.deathTetra : null;
+
+  ctxVR.fillStyle = "#fff";
+  ctxVR.fillRect(0, 0, canvasVR.width, canvasVR.height);
+
+  points.forEach((_, idx) => {
+    const s = screenPoint(idx);
+    ctxVR.fillStyle = "rgba(100, 160, 255, 0.08)";
+    ctxVR.strokeStyle = "rgba(60, 120, 220, 0.55)";
+    ctxVR.lineWidth = 1.5;
+    ctxVR.beginPath();
+    ctxVR.arc(s.x, s.y, r, 0, 2 * Math.PI);
+    ctxVR.fill();
+    ctxVR.stroke();
+  });
+
+  triangles.forEach(([i, j, k]) => {
+    const si = screenPoint(i);
+    const sj = screenPoint(j);
+    const sk = screenPoint(k);
+    const isDeathTri = hiDeathTri && triMatches(hiDeathTri, i, j, k);
+    const isBirthTri = hiBirthTri && triMatches(hiBirthTri, i, j, k);
+    ctxVR.fillStyle = isDeathTri
+      ? "rgba(230, 126, 34, 0.35)"
+      : isBirthTri
+        ? "rgba(34, 170, 68, 0.28)"
+        : "rgba(51, 136, 221, 0.18)";
+    ctxVR.strokeStyle = isDeathTri
+      ? "rgba(200, 90, 10, 0.9)"
+      : isBirthTri
+        ? "#15803d"
+        : "rgba(51, 136, 221, 0.45)";
+    ctxVR.lineWidth = isDeathTri || isBirthTri ? 2.5 : 1;
+    ctxVR.beginPath();
+    ctxVR.moveTo(si.x, si.y);
+    ctxVR.lineTo(sj.x, sj.y);
+    ctxVR.lineTo(sk.x, sk.y);
+    ctxVR.closePath();
+    ctxVR.fill();
+    ctxVR.stroke();
+  });
+
+  simplices3.forEach(([i, j, k, l]) => {
+    const active = hiTetra && simplex4Key(...hiTetra) === simplex4Key(i, j, k, l);
+    fillConvexHull(
+      [i, j, k, l],
+      active ? "rgba(230, 126, 34, 0.4)" : "rgba(148, 68, 204, 0.28)",
+      active ? "rgba(200, 90, 10, 0.95)" : "rgba(120, 50, 170, 0.65)",
+      active ? 2.5 : 1.5
+    );
+  });
+
+  edges.forEach(([i, j]) => {
+    const a = screenPoint(i);
+    const b = screenPoint(j);
+    const isHi = hiEdges && hiEdges.has(edgeKey(i, j));
+    const isH2Edge = hi && hi.dim === 2 && isHi;
+    ctxVR.strokeStyle = isH2Edge ? "#7c3aed" : isHi ? "#15803d" : "#666";
+    ctxVR.lineWidth = isH2Edge ? 4 : isHi ? 3.5 : 1;
+    ctxVR.beginPath();
+    ctxVR.moveTo(a.x, a.y);
+    ctxVR.lineTo(b.x, b.y);
+    ctxVR.stroke();
+  });
+
+  const pr = Math.min(3.5, Math.max(2, 0.85 * screenScale()));
+  points.forEach((_, idx) => {
+    const s = screenPoint(idx);
+    const isHi = hiVerts && hiVerts.has(idx);
+    const isH2 = hi && hi.dim === 2 && isHi;
+    ctxVR.fillStyle = isH2 ? "#a855f7" : isHi ? "#f59e0b" : "#d33";
+    ctxVR.strokeStyle = isH2 ? "#581c87" : isHi ? "#b45309" : "#900";
+    ctxVR.lineWidth = isH2 ? 2 : isHi ? 2 : 0.75;
+    ctxVR.beginPath();
+    ctxVR.arc(s.x, s.y, isH2 ? pr + 3 : isHi ? pr + 2 : pr, 0, 2 * Math.PI);
+    ctxVR.fill();
+    ctxVR.stroke();
+  });
+
+  function drawDashedTriangle(tri, fill, stroke) {
+    if (!tri || triangles.some(([i, j, k]) => triMatches(tri, i, j, k))) return;
+    const [i, j, k] = tri;
+    drawFilledTriangleHighlight(i, j, k, fill, stroke, 2.5, true);
+  }
+
+  drawDashedTriangle(hiBirthTri, "rgba(34, 170, 68, 0.22)", "#15803d");
+  drawH2Overlay(hi, triangles, simplices3);
+}
+
+let animating = false;
+let animFrameId = null;
+let animStartTime = 0;
+
+const slider = document.getElementById("scaleSlider");
+const scaleInput = document.getElementById("scaleInput");
+const scaleRangeHint = document.getElementById("scaleRangeHint");
+const loadModelBtn = document.getElementById("loadModelBtn");
+const modelSelect = document.getElementById("modelSelect");
+const pointCountSlider = document.getElementById("pointCountSlider");
+const pointCountInput = document.getElementById("pointCountInput");
+const animateEpsilon = document.getElementById("animateEpsilon");
+
+function clamp(v, min, max) {
+  return Math.min(max, Math.max(min, v));
+}
+
+function roundScale(v) {
+  const n = Number(v);
+  if (Number.isNaN(n)) return NaN;
+  const factor = 1 / SCALE_STEP;
+  return Math.round(n * factor) / factor;
+}
+
+function formatScale(v) {
+  return roundScale(v).toFixed(SCALE_DECIMALS);
+}
+
+function setScaleRadius(v, doUpdate = true) {
+  const min = parseFloat(slider.min);
+  const max = parseFloat(slider.max);
+  const raw = roundScale(v);
+  if (Number.isNaN(raw)) {
+    scaleInput.value = formatScale(parseFloat(slider.value));
+    return;
+  }
+  const n = clamp(raw, min, max);
+  slider.value = String(n);
+  scaleInput.value = formatScale(n);
+  scaleInput.min = MIN_RADIUS;
+  scaleInput.max = max;
+  scaleInput.step = String(SCALE_STEP);
+  if (doUpdate) update();
+}
+
+function applyPointCount(v, resample = true) {
+  const raw = Math.round(Number(v));
+  if (Number.isNaN(raw)) {
+    pointCountInput.value = pointCount;
+    return;
+  }
+  pointCount = clamp(raw, MIN_POINTS, MAX_POINTS);
+  pointCountSlider.value = String(pointCount);
+  pointCountInput.value = pointCount;
+  if (resample) reloadPointCloud();
+}
+
+function distributeAmong(parts, total) {
+  const counts = Array.from({ length: parts }, () => Math.floor(total / parts));
+  for (let i = 0; i < total % parts; i++) counts[i]++;
+  return counts;
+}
+
+function sampleRing(cx, cy, radius, n, phase = 0) {
+  if (n <= 0) return [];
+  if (n === 1) return [{ x: cx + radius, y: cy }];
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const t = phase + (2 * Math.PI * i) / n;
+    pts.push({ x: cx + radius * Math.cos(t), y: cy + radius * Math.sin(t) });
+  }
+  return pts;
+}
+
+function sampleRow(y, n, xMin = 22, xMax = 78) {
+  if (n <= 0) return [];
+  if (n === 1) return [{ x: (xMin + xMax) / 2, y }];
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const x = xMin + ((xMax - xMin) * i) / (n - 1);
+    pts.push({ x, y });
+  }
+  return pts;
+}
+
+function generateRandomPoints(n) {
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    pts.push({
+      x: Math.random() * DATA_SPAN,
+      y: Math.random() * DATA_SPAN,
+    });
+  }
+  return pts;
+}
+
+function generateModelPoints(model, n) {
+  switch (model) {
+    case "ring":
+      return sampleRing(50, 50, 30, n);
+    case "rings-separated": {
+      const centers = [
+        [22, 50],
+        [50, 50],
+        [78, 50],
+      ];
+      const counts = distributeAmong(3, n);
+      const pts = [];
+      centers.forEach(([cx, cy], i) => {
+        pts.push(...sampleRing(cx, cy, 11, counts[i], i * 0.9));
+      });
+      return pts;
+    }
+    case "two-rows": {
+      const nTop = Math.ceil(n / 2);
+      const nBottom = n - nTop;
+      return [...sampleRow(38, nTop), ...sampleRow(62, nBottom)];
+    }
+    case "figure-eight": {
+      const counts = distributeAmong(2, n);
+      return [
+        ...sampleRing(42, 50, 14, counts[0], 0),
+        ...sampleRing(58, 50, 14, counts[1], Math.PI),
+      ];
+    }
+    case "grid": {
+      const cols = Math.max(2, Math.ceil(Math.sqrt(n)));
+      const rows = Math.ceil(n / cols);
+      const pts = [];
+      const margin = 18;
+      const span = DATA_SPAN - 2 * margin;
+      for (let i = 0; i < n; i++) {
+        const r = Math.floor(i / cols);
+        const c = i % cols;
+        const x = margin + (cols === 1 ? span / 2 : (span * c) / (cols - 1));
+        const y = margin + (rows === 1 ? span / 2 : (span * r) / (rows - 1));
+        pts.push({ x, y });
+      }
+      return pts;
+    }
+    case "cluster": {
+      const cx = 50;
+      const cy = 50;
+      const pts = [];
+      for (let i = 0; i < n; i++) {
+        pts.push({
+          x: cx + (Math.random() - 0.5) * CLUSTER_SPAN * 1.4,
+          y: cy + (Math.random() - 0.5) * CLUSTER_SPAN * 1.4,
+        });
+      }
+      return pts;
+    }
+    case "random":
+    default:
+      return generateRandomPoints(n);
+  }
+}
+
+function reloadPointCloud() {
+  stopAnimation();
+  points.length = 0;
+  const generated = generateModelPoints(pointCloudModel, pointCount);
+  for (const p of generated) points.push(p);
+  pointCount = points.length;
+  pointCountSlider.value = String(pointCount);
+  pointCountInput.value = pointCount;
+  modelSelect.value = pointCloudModel;
+  finishPointCloudReload();
+}
+
+async function finishPointCloudReload() {
+  fitViewToCloud();
+  recomputeMaxFilt();
+  configureRadiusSlider();
+  hoveredInterval = null;
+  lastHoverKey = "";
+  hideBcTooltip();
+  await fetchPersistence();
+  update();
+}
+
+function loadSelectedModel() {
+  pointCloudModel = modelSelect.value;
+  reloadPointCloud();
+}
+
+function configureRadiusSlider() {
+  const maxR = Math.max(
+    MIN_RADIUS + SCALE_STEP,
+    Math.ceil(maxFilt / SCALE_STEP) * SCALE_STEP
+  );
+  slider.min = String(MIN_RADIUS);
+  slider.max = String(maxR);
+  slider.step = String(SCALE_STEP);
+  scaleInput.min = MIN_RADIUS;
+  scaleInput.max = maxR;
+  scaleInput.step = SCALE_STEP;
+  scaleRangeHint.textContent = `${MIN_RADIUS}–${maxR.toFixed(SCALE_DECIMALS)}`;
+  setScaleRadius(MIN_RADIUS, false);
+}
+
+function stopAnimation(keepCheckbox) {
+  animating = false;
+  if (!keepCheckbox) animateEpsilon.checked = false;
+  slider.disabled = false;
+  scaleInput.disabled = false;
+  if (animFrameId !== null) {
+    cancelAnimationFrame(animFrameId);
+    animFrameId = null;
+  }
+}
+
+function redrawCanvases() {
+  const radius = parseFloat(slider.value);
+  const highlight = highlightsFromInterval(hoveredInterval);
+  try {
+    drawVR(
+      computeEdges(radius),
+      computeTriangles(radius),
+      compute3Simplices(radius),
+      radius,
+      highlight
+    );
+  } catch (err) {
+    console.error("drawVR failed:", err);
+  }
+  drawBarcode(persistence, radius, hoveredInterval);
+}
+
+function onBcMouseMove(e) {
+  const { x, y } = canvasCoords(canvasBC, e.clientX, e.clientY);
+  const hit = hitTestBarcode(x, y);
+  const key = intervalHoverKey(hit);
+  canvasBC.classList.toggle("hit-active", !!hit);
+  showBcTooltip(hit, e.clientX, e.clientY);
+  if (key === lastHoverKey) return;
+  lastHoverKey = key;
+  hoveredInterval = hit;
+  redrawCanvases();
+}
+
+function onBcMouseLeave() {
+  lastHoverKey = "";
+  hoveredInterval = null;
+  canvasBC.classList.remove("hit-active");
+  hideBcTooltip();
+  redrawCanvases();
+}
+
+function update() {
+  redrawCanvases();
+}
+
+function animationTick(now) {
+  if (!animating) return;
+  const min = parseFloat(slider.min);
+  const max = parseFloat(slider.max);
+  const t = ((now - animStartTime) % ANIM_PERIOD_MS) / ANIM_PERIOD_MS;
+  const radius = min + (max - min) * t;
+  setScaleRadius(radius, true);
+  animFrameId = requestAnimationFrame(animationTick);
+}
+
+function startAnimation() {
+  stopAnimation(true);
+  animating = true;
+  slider.disabled = true;
+  scaleInput.disabled = true;
+  animStartTime = performance.now();
+  setScaleRadius(slider.min, true);
+  animFrameId = requestAnimationFrame(animationTick);
+}
+
+loadModelBtn.addEventListener("click", loadSelectedModel);
+pointCountSlider.addEventListener("input", () => {
+  applyPointCount(pointCountSlider.value);
+});
+pointCountInput.addEventListener("change", () => {
+  applyPointCount(pointCountInput.value);
+});
+pointCountInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") applyPointCount(pointCountInput.value);
+});
+slider.addEventListener("input", () => {
+  if (animating) stopAnimation(false);
+  setScaleRadius(slider.value);
+});
+scaleInput.addEventListener("change", () => {
+  if (animating) stopAnimation(false);
+  setScaleRadius(scaleInput.value);
+});
+scaleInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") setScaleRadius(scaleInput.value);
+});
+animateEpsilon.addEventListener("change", () => {
+  if (animateEpsilon.checked) startAnimation();
+  else stopAnimation();
+});
+canvasBC.addEventListener("mousemove", onBcMouseMove);
+canvasBC.addEventListener("mouseleave", onBcMouseLeave);
+
+reloadPointCloud();
+</script>
+</body>
+</html>
