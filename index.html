@@ -36,23 +36,25 @@
     max-width: 100%;
     padding-left: 0.85rem;
     border-left: 1px solid rgba(255, 255, 255, 0.22);
-    font-size: 0.64rem;
-    line-height: 1.45;
+    font-size: 0.56rem;
+    line-height: 1.4;
     font-weight: 400;
     color: rgba(255, 255, 255, 0.72);
     text-align: left;
   }
   .header-credits p {
     margin: 0;
-    font-style: italic;
     white-space: nowrap;
   }
-  .header-credits p + p {
-    margin-top: 0.3rem;
+  .header-credits .credits-line1 {
+    font-style: italic;
+  }
+  .header-credits .credits-sub {
+    margin-top: 0.22rem;
     font-style: normal;
-    font-size: 0.6rem;
-    line-height: 1.4;
-    color: rgba(255, 255, 255, 0.58);
+    font-size: 0.75em;
+    line-height: 1.38;
+    color: rgba(255, 255, 255, 0.6);
   }
   .header-credits a {
     color: #c5e4ff;
@@ -95,17 +97,15 @@
     .header-credits {
       align-self: flex-start;
       min-width: 0;
+      width: auto;
       padding-left: 0;
       border-left: none;
       padding-top: 0.35rem;
       border-top: 1px solid rgba(255, 255, 255, 0.15);
-      font-size: 0.62rem;
+      font-size: 0.54rem;
     }
     .header-credits p {
       white-space: normal;
-    }
-    .header-credits p + p {
-      font-size: 0.58rem;
     }
     header h1 { font-size: 1rem; margin-bottom: 0; }
     .header-main > p.header-intro { display: none; }
@@ -418,13 +418,15 @@
       </details>
     </div>
     <div class="header-credits">
-      <p>
+      <p class="credits-line1">
         Designed and developed by
         <a href="https://yuheqin-alina.github.io/" target="_blank" rel="noopener noreferrer">Yuhe Qin</a>.
       </p>
-      <p>
+      <p class="credits-sub">
         Based on an idea and guidance from
         <a href="https://yifeizhu.github.io/" target="_blank" rel="noopener noreferrer">Prof. Yifei Zhu</a>
+      </p>
+      <p class="credits-sub">
         for the
         <a href="https://sustech-topology.github.io/acts/" target="_blank" rel="noopener noreferrer">Applied Topology Group seminar</a>.
       </p>
