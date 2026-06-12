@@ -328,6 +328,27 @@
     .caption { font-size: 0.82rem; }
   }
   .btn-refresh:hover { background: #254a70; }
+  .site-footer {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem 1.75rem;
+    font-size: 0.88rem;
+    color: #555;
+    line-height: 1.55;
+    border-top: 1px solid #dde2e8;
+  }
+  .site-footer p { margin: 0.35rem 0; }
+  .site-footer a {
+    color: #1a6bb5;
+    text-decoration: none;
+  }
+  .site-footer a:hover { text-decoration: underline; }
+  @media (max-width: 960px) {
+    .site-footer {
+      padding: 0.75rem 0.65rem 1.25rem;
+      font-size: 0.82rem;
+    }
+  }
 </style>
 </head>
 <body>
@@ -429,6 +450,19 @@
   </section>
 
 </main>
+
+<footer class="site-footer">
+  <p>
+    Designed and developed by
+    <a href="https://yuheqin-alina.github.io/" target="_blank" rel="noopener noreferrer">Yuhe Qin</a>.
+  </p>
+  <p>
+    Based on an idea and guidance from
+    <a href="https://yifeizhu.github.io/" target="_blank" rel="noopener noreferrer">Prof.&nbsp;Yifei Zhu</a>
+    for the
+    <a href="https://sustech-topology.github.io/acts/" target="_blank" rel="noopener noreferrer">Applied Topology Seminar</a>.
+  </p>
+</footer>
 
 <script>
 let pointCount = 15;
