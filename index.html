@@ -3,83 +3,121 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vietoris–Rips Filtration &amp; Persistence Barcode</title>
+<title>Vietoris–Rips Filtration &amp; Persistence</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
 <style>
+  :root {
+    --font-ui: "Segoe UI", system-ui, sans-serif;
+    --color-bg: #e8e6e0;
+    --color-surface: #f7f6f3;
+    --color-paper: #ffffff;
+    --color-ink: #1c2228;
+    --color-ink-muted: #4d5661;
+    --color-ink-light: #6e7781;
+    --color-border: #b8bec6;
+    --color-border-light: #d8dde3;
+    --color-header: #132238;
+    --color-header-rule: #3d5a80;
+    --color-link: #2a5082;
+    --color-link-hover: #1a3a5c;
+    --color-error: #8b2e2e;
+    --radius: 3px;
+    --max-content: 1100px;
+    --viz-canvas-size: 400px;
+  }
   * { box-sizing: border-box; }
+  button, input, select, textarea {
+    font-family: inherit;
+  }
   body {
     margin: 0;
-    font-family: "Segoe UI", system-ui, sans-serif;
-    background: #f6f7f9;
-    color: #222;
-    line-height: 1.5;
+    font-family: var(--font-ui);
+    font-size: 15px;
+    background: var(--color-bg);
+    color: var(--color-ink);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
   }
+  a { color: var(--color-link); }
+  a:hover { color: var(--color-link-hover); }
   header {
-    background: #1a3a5c;
-    color: #fff;
-    padding: 1.25rem 1.5rem;
+    background: var(--color-header);
+    color: var(--color-header-text, #e8edf2);
+    padding: 1.35rem 1.5rem 1.15rem;
+    border-bottom: 3px solid var(--color-header-rule);
   }
   .header-inner {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 1.5rem 2rem;
-    max-width: 1100px;
+    max-width: var(--max-content);
     margin: 0 auto;
   }
   .header-main { flex: 1; min-width: 0; }
-  header h1 { margin: 0 0 0.35rem; font-size: 1.5rem; font-weight: 600; }
-  header p { margin: 0; max-width: 52rem; opacity: 0.92; font-size: 0.95rem; }
+  header h1 {
+    margin: 0 0 0.4rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.25;
+    color: #f4f7fa;
+  }
+  header p {
+    margin: 0;
+    max-width: 52rem;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: rgba(232, 237, 242, 0.88);
+  }
   .header-credits {
     flex-shrink: 0;
     align-self: center;
     width: max-content;
     max-width: 100%;
-    padding-left: 0.85rem;
-    border-left: 1px solid rgba(255, 255, 255, 0.22);
+    padding-left: 1rem;
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
     font-size: 0.68rem;
-    line-height: 1.4;
-    font-weight: 400;
-    color: rgba(255, 255, 255, 0.78);
+    line-height: 1.45;
+    color: rgba(232, 237, 242, 0.75);
     text-align: left;
   }
-  .header-credits p {
-    margin: 0;
-    white-space: nowrap;
-  }
-  .header-credits .credits-line1 {
-    font-style: italic;
-    font-size: 1em;
-  }
+  .header-credits p { margin: 0; white-space: nowrap; }
+  .header-credits .credits-line1 { font-style: italic; font-size: 1em; }
   .header-credits .credits-sub {
     margin-top: 0.24rem;
     font-style: normal;
     font-size: 0.51rem;
     line-height: 1.4;
-    color: rgba(255, 255, 255, 0.72);
+    color: rgba(232, 237, 242, 0.65);
   }
   .header-credits a {
-    color: #c5e4ff;
+    color: #b8d4eb;
     text-decoration: none;
     font-style: normal;
     font-weight: 500;
   }
-  .header-credits a:hover {
-    color: #fff;
-    text-decoration: underline;
-  }
+  .header-credits a:hover { color: #fff; text-decoration: underline; }
   header .header-more { display: none; }
-  header a { color: #9fd4ff; }
-  .panel a, .caption a, .explain a { color: #1a6bb5; }
+  header a { color: #9ec5e8; }
+  .panel a, .caption a, .explain a { color: var(--color-link); }
   main {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 1rem;
-    padding: 1rem 1.5rem 2rem;
-    max-width: 1100px;
+    gap: 1.15rem;
+    padding: 1.25rem 1.5rem 2.25rem;
+    max-width: var(--max-content);
     margin: 0 auto;
   }
-  .panel-vr { grid-column: 1; }
-  .panel-bc { grid-column: 2; }
+  .panel-vr { grid-column: 1; grid-row: 1; }
+  .panel-persist-col {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+    min-width: 0;
+  }
   @media (max-width: 960px) {
     main {
       grid-template-columns: 1fr;
@@ -87,9 +125,11 @@
       gap: 0.45rem;
     }
     .panel-vr,
-    .panel-bc {
+    .panel-persist-col {
       grid-column: 1;
+      grid-row: auto;
     }
+    .panel-persist-col { gap: 0.45rem; }
     header { padding: 0.55rem 0.65rem; }
     .header-inner {
       flex-direction: column;
@@ -110,6 +150,11 @@
     }
     .header-credits p {
       white-space: normal;
+    }
+    .btn-changelog-header {
+      font-size: 0.72rem;
+      padding: 0.4rem 0.75rem;
+      margin-top: 0.4rem;
     }
     header h1 { font-size: 1rem; margin-bottom: 0; }
     .header-main > p.header-intro { display: none; }
@@ -132,43 +177,110 @@
     header .header-more { display: none; }
   }
   .panel {
-    background: #fff;
-    border-radius: 8px;
-    border: 1px solid #dde2e8;
-    padding: 1rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    background: var(--color-paper);
+    border-radius: var(--radius);
+    border: 1px solid var(--color-border);
+    padding: 1.15rem 1.2rem;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
     min-width: 0;
   }
   @media (max-width: 960px) {
-    .panel { padding: 0.5rem; }
-    .panel h2 { font-size: 0.95rem; margin-bottom: 0.15rem; }
+    .panel { padding: 0.65rem; }
+    .panel h2 { font-size: 0.98rem; margin-bottom: 0.15rem; }
     .panel .subtitle { display: none; }
   }
   .panel h2 {
-    margin: 0 0 0.25rem;
-    font-size: 1.1rem;
-    color: #1a3a5c;
+    margin: 0 0 0.2rem;
+    font-size: 1.12rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    letter-spacing: 0.01em;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid var(--color-border-light);
   }
   .panel .subtitle {
-    margin: 0 0 0.75rem;
-    font-size: 0.85rem;
-    color: #555;
+    margin: 0.35rem 0 0.85rem;
+    font-size: 0.84rem;
+    color: var(--color-ink-muted);
+    font-style: italic;
   }
   canvas {
     display: block;
     width: 100%;
-    max-width: var(--viz-canvas-size, 400px);
+    max-width: var(--viz-canvas-size);
     height: auto;
     aspect-ratio: 1;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
+    border: none;
+    border-radius: 0;
     background: #fff;
+  }
+  .canvas-inner {
+    position: relative;
+    line-height: 0;
   }
   .canvas-wrap {
     width: 100%;
-    max-width: var(--viz-canvas-size, 400px);
+    max-width: var(--viz-canvas-size);
     margin: 0 auto;
+    padding: 0.45rem;
+    background: #fafafa;
+    border: 1px solid var(--color-border-light);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+    position: relative;
   }
+  .canvas-wrap-plot .plot-status {
+    font-size: 0.78rem;
+    color: var(--color-ink-light);
+    margin-bottom: 0.35rem;
+    min-height: 1.35em;
+    line-height: 1.35;
+  }
+  .canvas-inner canvas {
+    display: block;
+  }
+  .homology-band-labels {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+  }
+  .homology-band-label {
+    position: absolute;
+    transform: translateY(-50%);
+    font-size: 0.72rem;
+  }
+  .plot-axis-x {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--color-ink-muted);
+    margin-top: 0.3rem;
+  }
+  .plot-axis-labels-diagram {
+    display: grid;
+    grid-template-columns: 1fr;
+    margin-top: 0.3rem;
+    font-size: 0.78rem;
+    color: var(--color-ink-muted);
+  }
+  .plot-axis-labels-diagram .plot-axis-y {
+    text-align: left;
+    margin-bottom: 0.15rem;
+  }
+  .plot-axis-labels-diagram .plot-axis-x {
+    text-align: center;
+    margin-top: 0;
+  }
+  .katex { font-size: 1.02em; }
+  .panel h2 .katex,
+  .panel h3 .katex,
+  .compare-section-title .katex { font-size: 1em; }
+  header .katex { color: inherit; }
+  .bc-tooltip .katex { font-size: 0.95em; color: var(--color-ink); }
+  .bc-tooltip .katex-error { color: var(--color-error); }
+  .tooltip-interval { margin-top: 0.35rem; }
+  label .katex { font-size: 0.95em; }
   @media (max-width: 960px) {
     .canvas-wrap {
       width: 100%;
@@ -182,8 +294,8 @@
     }
   }
   .anim-row {
-    margin: 0 0 1rem;
-    font-size: 0.85rem;
+    margin: 0 0 0.5rem;
+    font-size: 0.82rem;
   }
   .anim-row label {
     display: flex;
@@ -195,37 +307,73 @@
   #scaleSlider:disabled,
   #scaleInput:disabled { opacity: 0.5; }
   .caption {
-    margin-top: 0.75rem;
-    font-size: 0.85rem;
-    color: #444;
+    margin-top: 0.85rem;
+    font-size: 0.84rem;
+    color: var(--color-ink-muted);
+    line-height: 1.5;
   }
-  .caption strong { color: #1a3a5c; }
+  .caption strong { color: var(--color-ink); font-weight: 600; }
+  .caption code {
+    font-size: 0.8rem;
+    padding: 0.1em 0.35em;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-light);
+    border-radius: 2px;
+  }
+  .barcode-hover-hint {
+    margin: 0.4rem 0 0;
+    padding: 0.42rem 0.55rem;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: var(--color-ink-muted);
+    background: rgba(61, 90, 128, 0.07);
+    border-left: 3px solid var(--color-header-rule);
+    border-radius: var(--radius);
+  }
+  .barcode-hover-label {
+    display: inline-block;
+    margin-right: 0.35rem;
+    padding: 0.06rem 0.38rem;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-header);
+    background: rgba(61, 90, 128, 0.12);
+    border-radius: 2px;
+    vertical-align: baseline;
+  }
+  .barcode-hover-hint strong {
+    color: var(--color-ink);
+    font-weight: 600;
+  }
   .vr-controls {
-    padding: 0.75rem 0.85rem;
-    background: #f8fafc;
-    border: 1px solid #e8ecf0;
-    border-radius: 6px;
-    margin-top: 0.65rem;
+    padding: 0.55rem 0.65rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius);
+    margin-top: 0.5rem;
   }
   .vr-controls h3 {
-    margin: 0 0 0.55rem;
-    font-size: 0.92rem;
-    color: #1a3a5c;
+    margin: 0 0 0.4rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    letter-spacing: 0.02em;
   }
   @media (max-width: 960px) {
     .vr-controls {
       margin-top: 0.35rem;
-      padding: 0.5rem 0.6rem;
+      padding: 0.45rem 0.5rem;
     }
     .vr-controls h3 {
-      margin-bottom: 0.35rem;
-      font-size: 0.85rem;
+      margin-bottom: 0.3rem;
+      font-size: 0.82rem;
     }
-    .vr-controls .btn-refresh {
-      margin-bottom: 0.45rem;
-      min-height: 2.35rem;
-      padding: 0.4rem 0.6rem;
-      font-size: 0.88rem;
+    .model-row-inline .btn-refresh {
+      min-height: 2rem;
+      padding: 0.3rem 0.45rem;
+      font-size: 0.68rem;
     }
     .slider-row {
       margin: 0.2rem 0 0.15rem;
@@ -237,59 +385,115 @@
     }
     #controls label { font-size: 0.82rem; }
     .control-hint {
-      margin-bottom: 0.45rem;
-      font-size: 0.75rem;
+      margin-bottom: 0.25rem;
+      font-size: 0.7rem;
     }
     .anim-row { margin: 0; font-size: 0.82rem; }
     .panel-vr > .caption,
-    .panel-bc > .caption { display: none; }
+    .panel-bc > .caption,
+    .diagram-caption { display: none; }
   }
   .legend {
-    font-size: 0.85rem;
-    margin: 0.65rem 0 0;
-    padding: 0;
+    font-size: 0.8rem;
+    margin: 0.55rem 0 0;
+    padding: 0.45rem 0 0;
+    border-top: 1px solid var(--color-border-light);
     list-style: none;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.35rem 0.85rem;
+    gap: 0.35rem 1rem;
+    color: var(--color-ink-muted);
   }
-  .legend li { display: flex; align-items: center; gap: 0.45rem; }
+  .legend li { display: flex; align-items: center; gap: 0.4rem; }
   .swatch {
-    width: 14px;
-    height: 14px;
-    border-radius: 3px;
+    width: 12px;
+    height: 12px;
+    border-radius: 1px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
     display: inline-block;
+    flex-shrink: 0;
   }
   .barcode-status {
-    margin: 0.5rem 0 0;
-    font-size: 0.82rem;
-    color: #666;
+    margin: 0.45rem 0 0;
+    font-size: 0.8rem;
+    color: var(--color-ink-light);
     min-height: 1.2em;
+    font-variant-numeric: tabular-nums;
   }
-  .barcode-status.error { color: #b42318; }
-  #canvasBC { cursor: default; }
-  #canvasBC.hit-active { cursor: pointer; }
+  .barcode-status.error { color: var(--color-error); }
+  #canvasBC,
+  #canvasDG { cursor: default; }
+  #canvasBC.hit-active,
+  #canvasDG.hit-active { cursor: pointer; }
+  .diagram-fold {
+    margin-top: 0.75rem;
+    border-top: 1px solid var(--color-border-light);
+    padding-top: 0.55rem;
+  }
+  .diagram-fold-summary {
+    cursor: pointer;
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    list-style: none;
+    user-select: none;
+  }
+  .diagram-fold-summary::-webkit-details-marker { display: none; }
+  .diagram-fold-summary::before {
+    content: "▸ ";
+    color: var(--color-ink-light);
+    font-size: 0.85em;
+  }
+  .diagram-fold[open] .diagram-fold-summary::before { content: "▾ "; }
+  .diagram-fold-body { margin-top: 0.5rem; }
+  .diagram-fold-body .subtitle {
+    margin: 0 0 0.55rem;
+    font-size: 0.82rem;
+    color: var(--color-ink-muted);
+    font-style: italic;
+  }
+  @media (max-width: 960px) {
+    .diagram-fold {
+      margin-top: 0.45rem;
+      padding-top: 0.4rem;
+    }
+    .diagram-fold-summary { font-size: 0.92rem; }
+    .diagram-fold-body .subtitle { display: none; }
+  }
   .bc-tooltip {
     position: fixed;
     z-index: 20;
-    max-width: 18rem;
-    padding: 0.45rem 0.6rem;
-    font-size: 0.8rem;
-    line-height: 1.35;
-    color: #1f2937;
-    background: #fff;
-    border: 1px solid #dde2e8;
-    border-radius: 6px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    max-width: 22rem;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    white-space: normal;
+    color: var(--color-ink);
+    background: var(--color-paper);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: 0 4px 20px rgba(19, 34, 56, 0.12);
     pointer-events: none;
     display: none;
   }
-  #controls label { font-weight: 600; font-size: 0.9rem; }
+  #controls label,
+  .compare-model-controls label {
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--color-ink);
+    letter-spacing: 0.02em;
+    display: block;
+    margin: 0.35rem 0 0.12rem;
+  }
+  .vr-controls > label:first-of-type,
+  .compare-model-controls > label:first-of-type {
+    margin-top: 0;
+  }
   .slider-row {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin: 0.35rem 0 0.25rem;
+    gap: 0.45rem;
+    margin: 0.15rem 0 0.1rem;
   }
   .slider-row input[type="range"] {
     flex: 1;
@@ -304,20 +508,22 @@
     height: 22px;
   }
   .slider-row input[type="range"]::-moz-range-thumb {
-    width: 22px;
-    height: 22px;
-    border: none;
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--color-border);
     border-radius: 50%;
-    background: #1a3a5c;
+    background: var(--color-header);
   }
   .slider-row input[type="number"] {
     width: 4.2rem;
-    padding: 0.45rem 0.4rem;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    padding: 0.4rem 0.4rem;
+    font-size: 0.92rem;
+    font-variant-numeric: tabular-nums;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-paper);
     text-align: right;
-    min-height: 2.5rem;
+    min-height: 2.25rem;
   }
   @media (max-width: 960px) {
     .slider-row input[type="range"] {
@@ -337,30 +543,53 @@
     }
   }
   .control-hint {
-    margin: 0 0 0.85rem;
-    font-size: 0.82rem;
-    color: #888;
+    margin: 0 0 0.35rem;
+    font-size: 0.72rem;
+    color: var(--color-ink-light);
+    font-style: italic;
   }
   .control-hint:last-child { margin-bottom: 0; }
-  .vr-controls .anim-row { margin: 0.25rem 0 0; }
-  .vr-controls .btn-refresh { margin-bottom: 0.85rem; }
+  .vr-controls .anim-row { margin: 0.15rem 0 0; }
   .model-row {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.4rem;
   }
   .model-row label {
     display: block;
     font-weight: 600;
-    font-size: 0.9rem;
-    margin-bottom: 0.3rem;
+    font-size: 0.82rem;
+    margin-bottom: 0.2rem;
+  }
+  .model-row-inline {
+    display: flex;
+    align-items: stretch;
+    gap: 0.4rem;
+  }
+  .model-row-inline .model-select {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+  }
+  .model-row-inline .btn-refresh {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0.35rem 0.6rem;
+    min-height: 2.1rem;
+    font-size: 0.74rem;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
   }
   .model-select {
     width: 100%;
-    padding: 0.45rem 0.5rem;
-    font-size: 0.9rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background: #fff;
-    min-height: 2.5rem;
+    padding: 0.35rem 0.45rem;
+    font-size: 0.84rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-paper);
+    min-height: 2.1rem;
   }
   @media (max-width: 960px) {
     .model-select { min-height: 2.35rem; font-size: 0.85rem; }
@@ -371,30 +600,367 @@
   .btn-refresh {
     display: block;
     width: 100%;
-    margin: 0 0 1rem;
-    padding: 0.55rem 0.75rem;
-    font-size: 0.95rem;
+    margin: 0;
+    padding: 0.45rem 0.65rem;
+    font-size: 0.8rem;
     font-weight: 600;
-    color: #fff;
-    background: #1a3a5c;
-    border: none;
-    border-radius: 6px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--color-paper);
+    background: var(--color-header);
+    border: 1px solid var(--color-header);
+    border-radius: var(--radius);
     cursor: pointer;
-    min-height: 2.75rem;
+    min-height: 2.25rem;
     touch-action: manipulation;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .btn-refresh:hover {
+    background: var(--color-link-hover);
+    border-color: var(--color-link-hover);
+  }
+  .btn-refresh:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .custom-points-panel {
+    margin-bottom: 0.4rem;
+  }
+  .custom-points-panel label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.82rem;
+    margin-bottom: 0.2rem;
+  }
+  .custom-points-input {
+    width: 100%;
+    min-height: 6.5rem;
+    padding: 0.45rem 0.5rem;
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", monospace;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-paper);
+    resize: vertical;
+    box-sizing: border-box;
+  }
+  .custom-points-hint {
+    margin: 0.35rem 0 0;
+    font-size: 0.76rem;
+    color: var(--color-ink-light);
+    line-height: 1.4;
+    font-style: italic;
+  }
+  .custom-points-error {
+    margin: 0.4rem 0 0;
+    font-size: 0.78rem;
+    color: var(--color-error);
+    line-height: 1.35;
+  }
+  .point-count-disabled .slider-row input:disabled,
+  .point-count-disabled input[type="range"]:disabled {
+    opacity: 0.45;
+  }
+  .mode-bar-wrap {
+    max-width: var(--max-content);
+    margin: 0 auto;
+    padding: 0.85rem 1.5rem 0;
+  }
+  .btn-changelog-header {
+    display: block;
+    margin-top: 0.5rem;
+    padding: 0.38rem 0.7rem;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #d4e8f8;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: var(--radius);
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .changelog-btn-date {
+    text-transform: none;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    opacity: 0.92;
+  }
+  .btn-changelog-header:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.45);
+  }
+  .changelog-dialog {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 0;
+    max-width: 38rem;
+    width: calc(100% - 2rem);
+    max-height: min(85vh, 640px);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    box-shadow: 0 12px 40px rgba(19, 34, 56, 0.18);
+  }
+  .changelog-dialog::backdrop {
+    background: rgba(19, 34, 56, 0.42);
+  }
+  .changelog-dialog-inner {
+    padding: 1.1rem 1.2rem 1rem;
+    overflow: auto;
+    max-height: min(85vh, 640px);
+  }
+  .changelog-dialog-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-border-light);
+  }
+  .changelog-dialog-header h2 {
+    margin: 0;
+    font-size: 1.08rem;
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+  .changelog-title-date {
+    font-weight: 500;
+    color: var(--color-ink-muted);
+  }
+  .changelog-dialog-intro {
+    margin: 0.2rem 0 0;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--color-ink-light);
+    font-style: italic;
+  }
+  .changelog-dialog-intro a {
+    font-style: normal;
+    font-weight: 600;
+  }
+  .changelog-close {
+    flex-shrink: 0;
+    padding: 0.3rem 0.55rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-ink-muted);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  .changelog-close:hover {
+    color: var(--color-ink);
+    border-color: var(--color-border);
+  }
+  .changelog-entry {
+    margin-bottom: 0.95rem;
+  }
+  .changelog-entry:last-child {
+    margin-bottom: 0;
+  }
+  .changelog-date {
+    margin: 0 0 0.35rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-header-rule);
+  }
+  .changelog-entry ul {
+    margin: 0;
+    padding-left: 1.15rem;
+    font-size: 0.84rem;
+    line-height: 1.5;
+    color: var(--color-ink-muted);
+  }
+  .changelog-entry li {
+    margin-bottom: 0.35rem;
+    padding: 0.35rem 0.45rem;
+    border-radius: var(--radius);
+  }
+  .changelog-entry li:last-child {
+    margin-bottom: 0;
+  }
+  .changelog-entry li.changelog-highlight {
+    background: linear-gradient(90deg, rgba(61, 90, 128, 0.1) 0%, rgba(230, 168, 46, 0.12) 100%);
+    border-left: 3px solid #c9a227;
+    padding-left: 0.55rem;
+    color: var(--color-ink);
+  }
+  .changelog-badge {
+    display: inline-block;
+    margin-right: 0.35rem;
+    padding: 0.05rem 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #7a5c10;
+    background: rgba(230, 168, 46, 0.28);
+    border-radius: 2px;
+    vertical-align: baseline;
+  }
+  body.compare-active #layoutSingle { display: none; }
+  .mode-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+    padding: 0.65rem 1rem;
+    background: var(--color-paper);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-header-rule);
+    border-radius: var(--radius);
+    font-size: 0.88rem;
+  }
+  .mode-bar label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    cursor: pointer;
+  }
+  .mode-bar-hint {
+    font-size: 0.8rem;
+    color: var(--color-ink-light);
+    font-style: italic;
+  }
+  .layout-compare:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 1rem 1.5rem 2rem;
+    max-width: var(--max-content);
+    margin: 0 auto;
+  }
+  .compare-toolbar-wrap.compare-toolbar-span {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+  .compare-toolbar-wrap .panel {
+    padding: 0.5rem 0.65rem;
+    background: var(--color-surface);
+  }
+  .compare-toolbar.panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.85rem;
+  }
+  .compare-toolbar h2 {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    border: none;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .compare-toolbar > label {
+    margin: 0;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+  }
+  .compare-toolbar .slider-row {
+    flex: 1;
+    min-width: 10rem;
+    margin: 0;
+  }
+  .compare-toolbar .control-hint {
+    margin: 0;
+    flex-shrink: 0;
+    font-size: 0.7rem;
+  }
+  .compare-toolbar .anim-row {
+    margin: 0;
+    font-size: 0.8rem;
+  }
+  .compare-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.45rem 1.15rem;
+  }
+  .compare-column { min-width: 0; }
+  .compare-column .panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .compare-column-title {
+    margin: 0 0 0.5rem;
+    font-size: 1.08rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    padding-bottom: 0.35rem;
+    border-bottom: 2px solid var(--color-header-rule);
+  }
+  .compare-section-title {
+    margin: 0.2rem 0 0.15rem;
+    font-size: 0.88rem;
+    color: var(--color-ink-muted);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .compare-model-controls {
+    padding: 0.5rem 0.6rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius);
+    margin-bottom: 0.3rem;
+  }
+  .panel-compare-head {
+    padding: 0.65rem 0.75rem;
+  }
+  .panel-compare-head .compare-column-title {
+    margin-bottom: 0.35rem;
+    padding-bottom: 0.25rem;
+  }
+  .panel-compare-head .compare-model-controls {
+    margin-bottom: 0;
+  }
+  .compare-persist-block {
+    margin-top: 0.25rem;
+  }
+  .compare-persist-block .legend {
+    margin-top: 0.45rem;
   }
   @media (max-width: 960px) {
-    .btn-refresh {
-      min-height: 3rem;
-      font-size: 1rem;
+    .mode-bar-wrap { padding: 0.35rem 0.65rem 0; }
+    .layout-compare:not([hidden]) {
+      padding: 0.35rem;
+      gap: 0.45rem;
     }
-    .anim-row label {
-      min-height: 2.5rem;
-      padding: 0.15rem 0;
+    .compare-columns {
+      grid-template-columns: 1fr;
     }
-    .caption { font-size: 0.82rem; }
+    .compare-toolbar.panel {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.3rem;
+    }
+    .compare-toolbar .slider-row {
+      min-width: 0;
+    }
+    .compare-toolbar h2 {
+      font-size: 0.82rem;
+    }
+    .mode-bar-hint { display: none; }
+    .btn-refresh { min-height: 2.75rem; font-size: 0.82rem; }
+    .caption { font-size: 0.8rem; }
+    .anim-row label { min-height: 2.25rem; padding: 0.1rem 0; }
   }
-  .btn-refresh:hover { background: #254a70; }
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--color-header-rule);
+    outline-offset: 2px;
+  }
 </style>
 </head>
 <body>
@@ -402,22 +968,21 @@
 <header>
   <div class="header-inner">
     <div class="header-main">
-      <h1>Vietoris–Rips filtration</h1>
+      <h1>Vietoris–Rips Filtration &amp; Persistent Homology</h1>
       <p class="header-intro">
-        A point cloud in ℝ² and its
+        Interactive visualization of a planar point cloud, its
         <a href="https://en.wikipedia.org/wiki/Vietoris%E2%80%93Rips_filtration" target="_blank" rel="noopener">Vietoris–Rips filtration</a>
-        (nested complexes built from disks of radius ε).
-        Increase ε to add
-        <a href="https://en.wikipedia.org/wiki/Simplicial_complex" target="_blank" rel="noopener">simplices</a>
-        when pairwise distances permit.
+        (nested complexes from disks of radius $\varepsilon$), and the associated
+        <a href="https://en.wikipedia.org/wiki/Persistent_homology" target="_blank" rel="noopener">persistent homology</a>
+        barcode (GUDHI, $\mathbb{Z}_2$).
       </p>
       <details class="header-more">
         <summary>About this demo</summary>
         <p>
-          A random point cloud in ℝ² and its
+          A random point cloud in $\mathbb{R}^2$ and its
           <a href="https://en.wikipedia.org/wiki/Vietoris%E2%80%93Rips_filtration" target="_blank" rel="noopener">Vietoris–Rips filtration</a>
-          (nested complexes built from disks of radius ε).
-          Increasing ε adds simplices when pairwise distances permit.
+          (nested complexes built from disks of radius $\varepsilon$).
+          Increasing $\varepsilon$ adds simplices when pairwise distances permit.
         </p>
       </details>
     </div>
@@ -434,13 +999,74 @@
         for the
         <a href="https://sustech-topology.github.io/acts/" target="_blank" rel="noopener noreferrer">Applied Topology Group seminar</a>.
       </p>
+      <button type="button" id="changelogOpen" class="btn-changelog-header" aria-haspopup="dialog">
+        Changelog <span class="changelog-btn-date">· 13 Jun 2026</span>
+      </button>
     </div>
   </div>
 </header>
 
-<main>
+<dialog id="changelogDialog" class="changelog-dialog" aria-labelledby="changelogTitle">
+  <div class="changelog-dialog-inner">
+    <div class="changelog-dialog-header">
+      <div>
+        <h2 id="changelogTitle">Changelog <span class="changelog-title-date">· 13 June 2026</span></h2>
+        <p class="changelog-dialog-intro">
+          Recent updates to this demo — and I’d love to hear from you!
+          More advice can be sent to
+          <a href="mailto:qinyuhe666@gmail.com">qinyuhe666@gmail.com</a>.
+        </p>
+      </div>
+      <button type="button" class="changelog-close" id="changelogClose" aria-label="Close changelog">
+        Close
+      </button>
+    </div>
+    <section class="changelog-entry">
+      <p class="changelog-date">13 June 2026</p>
+      <ul>
+        <li class="changelog-highlight">
+          <span class="changelog-badge">New</span>
+          <strong>Comparison mode</strong> — Compare two point-cloud models side by side under one shared filtration $\varepsilon$; shared slider sits directly above the Rips panels.
+        </li>
+        <li class="changelog-highlight">
+          <span class="changelog-badge">New</span>
+          <strong>Persistence diagram</strong> — Foldable birth–death plot under each barcode (single view and both comparison columns).
+        </li>
+        <li class="changelog-highlight">
+          <span class="changelog-badge">New</span>
+          <strong>Custom point clouds</strong> — Paste 5–30 coordinates per model; load independently in comparison mode.
+        </li>
+        <li class="changelog-highlight">
+          <span class="changelog-badge">New</span>
+          <strong>$H_1$ cycle highlight</strong> — Hover a barcode interval to see dashed green edges along the born 1-cycle in the Rips panel.
+        </li>
+        <li class="changelog-highlight">
+          <span class="changelog-badge">New</span>
+          <strong>LaTeX math (KaTeX)</strong> — $\varepsilon$, $H_d$, $\mathbb{R}^2$, $\mathbb{Z}_2$, norms, and intervals rendered across labels, plots, and tooltips.
+        </li>
+        <li><strong>Interactive hover</strong> — Barcode and diagram hover again drives VR highlights and interval tooltips.</li>
+        <li><strong>Filtration controls</strong> — Tighter layout; <em>Load point cloud</em> on the same row as the model dropdown.</li>
+        <li><strong>Typography</strong> — Unified <code>Segoe UI</code> / system sans-serif across the UI.</li>
+        <li><strong>Comparison fixes</strong> — Model&nbsp;A status sync; barcode bars use a capped height for readable $H_1$ intervals.</li>
+        <li><strong>Tooltips</strong> — Corrected LaTeX in interval descriptions ($H_d$, $\varepsilon$, $\infty$).</li>
+      </ul>
+    </section>
+  </div>
+</dialog>
+
+<div class="mode-bar-wrap">
+  <div class="mode-bar">
+    <label>
+      <input type="checkbox" id="compareModeToggle">
+      Comparison mode
+    </label>
+    <span class="mode-bar-hint">Side-by-side comparison of two models under a shared filtration parameter $\varepsilon$</span>
+  </div>
+</div>
+
+<main id="layoutSingle">
   <section class="panel panel-vr">
-    <h2>Rips complex at filtration ε</h2>
+    <h2>Rips complex at filtration $\varepsilon$</h2>
     <p class="subtitle">Sublevel set of the filtration parameter (disk radius)</p>
     <div class="canvas-wrap">
       <canvas id="canvasVR" width="400" height="400"></canvas>
@@ -450,74 +1076,328 @@
       <h3>Filtration controls</h3>
       <div class="model-row">
         <label for="modelSelect">Point cloud model</label>
-        <select id="modelSelect" class="model-select">
-          <option value="random">Random points</option>
-          <option value="ring">Single ring</option>
-          <option value="rings-separated">Three separated rings</option>
-          <option value="two-rows">Two parallel rows</option>
-          <option value="figure-eight">Figure eight</option>
-          <option value="grid">Grid</option>
-          <option value="cluster">Tight cluster</option>
-        </select>
+        <div class="model-row-inline">
+          <select id="modelSelect" class="model-select">
+            <option value="random">Random points</option>
+            <option value="ring">Single ring</option>
+            <option value="rings-separated">Three separated rings</option>
+            <option value="two-rows">Two parallel rows</option>
+            <option value="figure-eight">Figure eight</option>
+            <option value="grid">Grid</option>
+            <option value="cluster">Tight cluster</option>
+            <option value="custom">Custom coordinates</option>
+          </select>
+          <button type="button" id="loadModelBtn" class="btn-refresh">Load point cloud</button>
+        </div>
       </div>
-      <button type="button" id="loadModelBtn" class="btn-refresh">Load model</button>
-      <label for="scaleSlider">Filtration ε (disk radius)</label>
+      <div id="customPointCloudPanel" class="custom-points-panel" hidden>
+        <label for="customPointsInput">Custom points (x y per line)</label>
+        <textarea
+          id="customPointsInput"
+          class="custom-points-input"
+          rows="7"
+          spellcheck="false"
+          placeholder="22 38
+42 62
+50 50
+58 38
+78 62"
+        ></textarea>
+        <p class="custom-points-hint">5–30 points. Separate x and y with space or comma; # for comments.</p>
+        <p id="customPointsError" class="custom-points-error" hidden></p>
+      </div>
+      <label for="scaleSlider">Filtration $\varepsilon$ (disk radius)</label>
       <div class="slider-row">
         <input type="range" id="scaleSlider" value="0">
         <input type="number" id="scaleInput" min="0" step="0.1" value="0" aria-label="Filtration epsilon">
       </div>
       <p class="control-hint">Range <span id="scaleRangeHint">0–200</span> (depends on point cloud)</p>
-      <label for="pointCountSlider">Number of points</label>
-      <div class="slider-row">
+      <label for="pointCountSlider" id="pointCountLabel">Number of points</label>
+      <div class="slider-row" id="pointCountRow">
         <input type="range" id="pointCountSlider" min="5" max="30" step="1" value="15">
         <input type="number" id="pointCountInput" min="5" max="30" step="1" value="15" aria-label="Number of points">
       </div>
-      <p class="control-hint">5–30 vertices</p>
+      <p class="control-hint" id="pointCountHint">5–30 vertices</p>
       <div class="anim-row">
         <label>
           <input type="checkbox" id="animateEpsilon">
-          Animate ε (auto-increase)
+          Animate $\varepsilon$ (auto-increase)
         </label>
       </div>
     </div>
 
     <p class="caption">
       <strong>Vertices</strong> — sample points.
-      <strong>Disks</strong> B(p<sub>i</sub>, ε): a
-      <strong>1-simplex</strong> (edge) joins p<sub>i</sub>, p<sub>j</sub> when
-      ‖p<sub>i</sub> − p<sub>j</sub>‖ ≤ 2ε; a
+      <strong>Disks</strong> $B(p_i, \varepsilon)$: a
+      <strong>1-simplex</strong> (edge) joins $p_i$, $p_j$ when
+      $\|p_i - p_j\| \le 2\varepsilon$; a
       <strong>2-simplex</strong> (triangle) appears when all three pairwise edges exist; a
       <strong>3-simplex</strong> (tetrahedron on four vertices) appears when all six pairwise edges exist.
       Each resample uses the selected <strong>point cloud model</strong>.
     </p>
   </section>
 
+  <div class="panel-persist-col" id="persistCol" data-persist-col="single">
   <section class="panel panel-bc">
     <h2>Persistence barcode</h2>
-    <p class="subtitle">Intervals from GUDHI (Z₂, full Rips filtration)</p>
-    <div class="canvas-wrap">
-      <canvas id="canvasBC" width="400" height="400"></canvas>
+    <p class="subtitle">Intervals from GUDHI ($\mathbb{Z}_2$, full Rips filtration)</p>
+    <div class="canvas-wrap canvas-wrap-plot">
+      <div class="plot-status"></div>
+      <div class="canvas-inner">
+        <canvas id="canvasBC" width="400" height="400"></canvas>
+        <div class="homology-band-labels"></div>
+      </div>
+      <div class="plot-axis-x">$\varepsilon$ (disk radius)</div>
     </div>
     <ul class="legend">
-      <li><span class="swatch" style="background:#3388dd"></span> H₀</li>
-      <li><span class="swatch" style="background:#22aa44"></span> H₁</li>
-      <li><span class="swatch" style="background:#9444cc"></span> H₂</li>
-      <li><span class="swatch" style="background:#e67e22; width:3px"></span> current ε</li>
+      <li><span class="swatch" style="background:#3388dd"></span> $H_0$</li>
+      <li><span class="swatch" style="background:#22aa44"></span> $H_1$</li>
+      <li><span class="swatch" style="background:#9444cc"></span> $H_2$</li>
+      <li><span class="swatch" style="background:#e67e22; width:3px"></span> current $\varepsilon$</li>
     </ul>
     <p id="barcodeStatus" class="barcode-status">Computing persistence…</p>
     <div id="bcTooltip" class="bc-tooltip" role="tooltip"></div>
+    <p class="barcode-hover-hint">
+      <span class="barcode-hover-label">Tip</span>
+      <strong>Hover</strong> a barcode bar (or a diagram point) to highlight matching features in the Rips panel and read interval details.
+    </p>
     <p class="caption">
-      Each bar is an interval [birth, death) in disk radius ε.
-      Brighter bars are <strong>alive</strong> at the current ε on the left.
+      Each bar is an interval $[\mathrm{birth}, \mathrm{death})$ in disk radius $\varepsilon$.
+      Brighter bars are <strong>alive</strong> at the current $\varepsilon$ on the left.
       Requires the GUDHI server (<code>python server.py</code>).
     </p>
+
+    <details id="diagramDetails" class="diagram-fold">
+      <summary class="diagram-fold-summary">Persistence diagram</summary>
+      <div class="diagram-fold-body">
+        <p class="subtitle">Birth–death plot ($\varepsilon$ on both axes)</p>
+        <div class="canvas-wrap canvas-wrap-plot">
+          <div class="plot-status"></div>
+          <div class="canvas-inner">
+            <canvas id="canvasDG" width="400" height="400"></canvas>
+          </div>
+          <div class="plot-axis-labels-diagram">
+            <span class="plot-axis-y">death $\varepsilon$</span>
+            <span class="plot-axis-x">birth $\varepsilon$</span>
+          </div>
+        </div>
+        <ul class="legend">
+          <li><span class="swatch" style="background:#3388dd"></span> $H_0$</li>
+          <li><span class="swatch" style="background:#22aa44"></span> $H_1$</li>
+          <li><span class="swatch" style="background:#9444cc"></span> $H_2$</li>
+          <li><span class="swatch" style="background:#e67e22; width:3px"></span> current $\varepsilon$</li>
+          <li><span class="swatch" style="background:#6b7280; width:3px"></span> diagonal</li>
+        </ul>
+        <p class="caption diagram-caption">
+          Each point is $(\mathrm{birth}, \mathrm{death})$ in $\varepsilon$; upward triangles mark infinite persistence.
+          Points above the diagonal have positive persistence; <strong>hover</strong> to highlight representatives in the Rips panel.
+        </p>
+      </div>
+    </details>
   </section>
+  </div>
 
 </main>
 
+<div id="layoutCompare" class="layout-compare" hidden>
+  <div class="compare-columns" id="compareColumns">
+    <div class="compare-column" id="compareCol0">
+      <section class="panel panel-compare-head">
+        <h2 class="compare-column-title">Model A</h2>
+        <div class="compare-model-controls">
+          <div class="model-row">
+            <label for="modelSelect0">Point cloud model</label>
+            <div class="model-row-inline">
+              <select id="modelSelect0" class="model-select">
+                <option value="random">Random points</option>
+                <option value="ring">Single ring</option>
+                <option value="rings-separated">Three separated rings</option>
+                <option value="two-rows">Two parallel rows</option>
+                <option value="figure-eight">Figure eight</option>
+                <option value="grid">Grid</option>
+                <option value="cluster">Tight cluster</option>
+                <option value="custom">Custom coordinates</option>
+              </select>
+              <button type="button" id="loadModelBtn0" class="btn-refresh">Load point cloud</button>
+            </div>
+          </div>
+          <div id="customPointCloudPanel0" class="custom-points-panel" hidden>
+            <label for="customPointsInput0">Custom points (x y per line)</label>
+            <textarea id="customPointsInput0" class="custom-points-input" rows="5" spellcheck="false"></textarea>
+            <p class="custom-points-hint">5–30 points. Space or comma separated.</p>
+            <p id="customPointsError0" class="custom-points-error" hidden></p>
+          </div>
+          <label for="pointCountSlider0" id="pointCountLabel0">Number of points</label>
+          <div class="slider-row" id="pointCountRow0">
+            <input type="range" id="pointCountSlider0" min="5" max="30" step="1" value="15">
+            <input type="number" id="pointCountInput0" min="5" max="30" step="1" value="15">
+          </div>
+          <p class="control-hint" id="pointCountHint0">5–30 vertices</p>
+        </div>
+      </section>
+    </div>
+    <div class="compare-column" id="compareCol1">
+      <section class="panel panel-compare-head">
+        <h2 class="compare-column-title">Model B</h2>
+        <div class="compare-model-controls">
+          <div class="model-row">
+            <label for="modelSelect1">Point cloud model</label>
+            <div class="model-row-inline">
+              <select id="modelSelect1" class="model-select">
+                <option value="random">Random points</option>
+                <option value="ring">Single ring</option>
+                <option value="rings-separated" selected>Three separated rings</option>
+                <option value="two-rows">Two parallel rows</option>
+                <option value="figure-eight">Figure eight</option>
+                <option value="grid">Grid</option>
+                <option value="cluster">Tight cluster</option>
+                <option value="custom">Custom coordinates</option>
+              </select>
+              <button type="button" id="loadModelBtn1" class="btn-refresh">Load point cloud</button>
+            </div>
+          </div>
+          <div id="customPointCloudPanel1" class="custom-points-panel" hidden>
+            <label for="customPointsInput1">Custom points (x y per line)</label>
+            <textarea id="customPointsInput1" class="custom-points-input" rows="5" spellcheck="false"></textarea>
+            <p class="custom-points-hint">5–30 points. Space or comma separated.</p>
+            <p id="customPointsError1" class="custom-points-error" hidden></p>
+          </div>
+          <label for="pointCountSlider1" id="pointCountLabel1">Number of points</label>
+          <div class="slider-row" id="pointCountRow1">
+            <input type="range" id="pointCountSlider1" min="5" max="30" step="1" value="15">
+            <input type="number" id="pointCountInput1" min="5" max="30" step="1" value="15">
+          </div>
+          <p class="control-hint" id="pointCountHint1">5–30 vertices</p>
+        </div>
+      </section>
+    </div>
+    <div class="compare-toolbar-wrap compare-toolbar-span">
+      <section class="panel compare-toolbar">
+        <h2>Shared filtration</h2>
+        <label for="scaleSliderCmp">$\varepsilon$ (disk radius)</label>
+        <div class="slider-row">
+          <input type="range" id="scaleSliderCmp" value="0">
+          <input type="number" id="scaleInputCmp" min="0" step="0.1" value="0" aria-label="Filtration epsilon">
+        </div>
+        <p class="control-hint">Range <span id="scaleRangeHintCmp">0–200</span></p>
+        <div class="anim-row">
+          <label>
+            <input type="checkbox" id="animateEpsilonCmp">
+            Animate $\varepsilon$
+          </label>
+        </div>
+      </section>
+    </div>
+    <div class="compare-column compare-viz-col">
+      <section class="panel">
+        <h3 class="compare-section-title">Rips complex at filtration $\varepsilon$</h3>
+        <div class="canvas-wrap">
+          <canvas id="canvasVR0" width="360" height="360"></canvas>
+        </div>
+        <div class="compare-persist-block" data-persist-col="0">
+          <h3 class="compare-section-title">Persistence barcode</h3>
+          <div class="canvas-wrap canvas-wrap-plot">
+            <div class="plot-status"></div>
+            <div class="canvas-inner">
+              <canvas id="canvasBC0" width="360" height="360"></canvas>
+              <div class="homology-band-labels"></div>
+            </div>
+            <div class="plot-axis-x">$\varepsilon$ (disk radius)</div>
+          </div>
+          <ul class="legend">
+            <li><span class="swatch" style="background:#3388dd"></span> $H_0$</li>
+            <li><span class="swatch" style="background:#22aa44"></span> $H_1$</li>
+            <li><span class="swatch" style="background:#9444cc"></span> $H_2$</li>
+            <li><span class="swatch" style="background:#e67e22; width:3px"></span> current $\varepsilon$</li>
+          </ul>
+          <p id="barcodeStatus0" class="barcode-status">Computing persistence…</p>
+          <p class="barcode-hover-hint">
+            <span class="barcode-hover-label">Tip</span>
+            <strong>Hover</strong> a bar or diagram point for Rips highlights and interval details.
+          </p>
+          <details id="diagramDetails0" class="diagram-fold">
+            <summary class="diagram-fold-summary">Persistence diagram</summary>
+            <div class="diagram-fold-body">
+              <div class="canvas-wrap canvas-wrap-plot">
+                <div class="plot-status"></div>
+                <div class="canvas-inner">
+                  <canvas id="canvasDG0" width="360" height="360"></canvas>
+                </div>
+                <div class="plot-axis-labels-diagram">
+                  <span class="plot-axis-y">death $\varepsilon$</span>
+                  <span class="plot-axis-x">birth $\varepsilon$</span>
+                </div>
+              </div>
+              <ul class="legend">
+                <li><span class="swatch" style="background:#3388dd"></span> $H_0$</li>
+                <li><span class="swatch" style="background:#22aa44"></span> $H_1$</li>
+                <li><span class="swatch" style="background:#9444cc"></span> $H_2$</li>
+                <li><span class="swatch" style="background:#e67e22; width:3px"></span> current $\varepsilon$</li>
+                <li><span class="swatch" style="background:#6b7280; width:3px"></span> diagonal</li>
+              </ul>
+            </div>
+          </details>
+        </div>
+      </section>
+    </div>
+    <div class="compare-column compare-viz-col">
+      <section class="panel">
+        <h3 class="compare-section-title">Rips complex at filtration $\varepsilon$</h3>
+        <div class="canvas-wrap">
+          <canvas id="canvasVR1" width="360" height="360"></canvas>
+        </div>
+        <div class="compare-persist-block" data-persist-col="1">
+          <h3 class="compare-section-title">Persistence barcode</h3>
+          <div class="canvas-wrap canvas-wrap-plot">
+            <div class="plot-status"></div>
+            <div class="canvas-inner">
+              <canvas id="canvasBC1" width="360" height="360"></canvas>
+              <div class="homology-band-labels"></div>
+            </div>
+            <div class="plot-axis-x">$\varepsilon$ (disk radius)</div>
+          </div>
+          <ul class="legend">
+            <li><span class="swatch" style="background:#3388dd"></span> $H_0$</li>
+            <li><span class="swatch" style="background:#22aa44"></span> $H_1$</li>
+            <li><span class="swatch" style="background:#9444cc"></span> $H_2$</li>
+            <li><span class="swatch" style="background:#e67e22; width:3px"></span> current $\varepsilon$</li>
+          </ul>
+          <p id="barcodeStatus1" class="barcode-status">Computing persistence…</p>
+          <p class="barcode-hover-hint">
+            <span class="barcode-hover-label">Tip</span>
+            <strong>Hover</strong> a bar or diagram point for Rips highlights and interval details.
+          </p>
+          <details id="diagramDetails1" class="diagram-fold">
+            <summary class="diagram-fold-summary">Persistence diagram</summary>
+            <div class="diagram-fold-body">
+              <div class="canvas-wrap canvas-wrap-plot">
+                <div class="plot-status"></div>
+                <div class="canvas-inner">
+                  <canvas id="canvasDG1" width="360" height="360"></canvas>
+                </div>
+                <div class="plot-axis-labels-diagram">
+                  <span class="plot-axis-y">death $\varepsilon$</span>
+                  <span class="plot-axis-x">birth $\varepsilon$</span>
+                </div>
+              </div>
+              <ul class="legend">
+                <li><span class="swatch" style="background:#3388dd"></span> $H_0$</li>
+                <li><span class="swatch" style="background:#22aa44"></span> $H_1$</li>
+                <li><span class="swatch" style="background:#9444cc"></span> $H_2$</li>
+                <li><span class="swatch" style="background:#e67e22; width:3px"></span> current $\varepsilon$</li>
+                <li><span class="swatch" style="background:#6b7280; width:3px"></span> diagonal</li>
+              </ul>
+            </div>
+          </details>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
 <script>
-let pointCount = 15;
-let pointCloudModel = "random";
 const MIN_POINTS = 5;
 const MAX_POINTS = 30;
 const MIN_RADIUS = 0;
@@ -527,22 +1407,211 @@ const DATA_SPAN = 100;
 const VR_MARGIN = 32;
 const ANIM_PERIOD_MS = 12000;
 const CLUSTER_SPAN = 12;
-const points = [];
-const canvasVR = document.getElementById("canvasVR");
-const ctxVR = canvasVR.getContext("2d");
-const canvasBC = document.getElementById("canvasBC");
-const ctxBC = canvasBC.getContext("2d");
-const barcodeStatus = document.getElementById("barcodeStatus");
-const bcTooltip = document.getElementById("bcTooltip");
+
+const KATEX_DELIMS = [
+  { left: "$$", right: "$$", display: true },
+  { left: "$", right: "$", display: false },
+];
+
+function renderTex(tex, displayMode = false) {
+  if (typeof katex === "undefined") return tex;
+  try {
+    return katex.renderToString(tex, {
+      throwOnError: false,
+      displayMode,
+      strict: "ignore",
+    });
+  } catch {
+    return tex;
+  }
+}
+
+function setMathHtml(el, tex, displayMode = false) {
+  if (!el) return;
+  el.innerHTML = renderTex(tex, displayMode);
+}
+
+function renderPageMath(root = document.body) {
+  if (typeof renderMathInElement !== "function") return;
+  renderMathInElement(root, {
+    delimiters: KATEX_DELIMS,
+    throwOnError: false,
+  });
+}
+
+function updateAlivePlotStatus(canvas, eps, counts) {
+  const el = canvas.closest(".canvas-wrap-plot")?.querySelector(".plot-status");
+  if (!el) return;
+  setMathHtml(
+    el,
+    `\\text{alive at }\\varepsilon = ${eps.toFixed(SCALE_DECIMALS)}:\\; H_0=${counts[0]},\\ H_1=${counts[1]},\\ H_2=${counts[2]}`
+  );
+}
+
+function updateHomologyBandLabels(canvas, layout) {
+  const labelsEl = canvas.closest(".canvas-wrap-plot")?.querySelector(".homology-band-labels");
+  if (!labelsEl) return;
+  const dims = [0, 1, 2];
+  const bandH = layout.plotH / dims.length;
+  const { padT, padL } = layout;
+  labelsEl.innerHTML = dims
+    .map((dim, bandIdx) => {
+      const yPct = ((padT + bandH * bandIdx + bandH / 2) / canvas.height) * 100;
+      return `<span class="homology-band-label" style="top:${yPct}%;left:${padL - 8}px">${renderTex(`H_{${dim}}`)}</span>`;
+    })
+    .join("");
+}
+
+let compareMode = false;
+let activeSlotIndex = 0;
+
+function createSlotData(model = "random") {
+  return {
+    pointCount: 15,
+    pointCloudModel: model,
+    points: [],
+    persistence: { intervals: [], maxFilt: 1 },
+    maxFilt: 0,
+    view: { sx: 1, sy: 1, ox: VR_MARGIN, oy: VR_MARGIN },
+    hoveredInterval: null,
+    lastHoverKey: "",
+    barcodeHitTargets: [],
+    diagramHitTargets: [],
+    diagramOverlapGroups: new Map(),
+  };
+}
+
+const slots = [createSlotData("random"), createSlotData("rings-separated")];
+
+let pointCount;
+let pointCloudModel;
+
+let points;
+let canvasVR, ctxVR, canvasBC, ctxBC, canvasDG, ctxDG;
+let persistCol, diagramDetails, barcodeStatus;
+let modelSelect, loadModelBtn, customPointCloudPanel, customPointsInput, customPointsError;
+let pointCountLabel, pointCountRow, pointCountHint, pointCountSlider, pointCountInput;
 
 const BC_COLORS = ["#3388dd", "#22aa44", "#9444cc"];
+const BC_BAR_MAX_HEIGHT = 10;
 const PERSIST_EPS = 1e-9;
+const PERSIST_PAD_L = 48;
+const PERSIST_PAD_R = 16;
+const PERSIST_PAD_T = 28;
+const PERSIST_PAD_B = 44;
 
-let persistence = { intervals: [], maxFilt: 1 };
-let barcodeHitTargets = [];
-let hoveredInterval = null;
-let lastHoverKey = "";
-let view = { sx: 1, sy: 1, ox: VR_MARGIN, oy: VR_MARGIN };
+let persistence;
+let barcodeHitTargets;
+let diagramHitTargets;
+let diagramOverlapGroups;
+let hoveredInterval;
+let lastHoverKey;
+let view;
+let maxFilt = 0;
+
+const bcTooltip = document.getElementById("bcTooltip");
+const layoutSingle = document.getElementById("layoutSingle");
+const layoutCompare = document.getElementById("layoutCompare");
+const compareModeToggle = document.getElementById("compareModeToggle");
+
+function domFromSuffix(suffix) {
+  const id = (base) => document.getElementById(base + suffix);
+  const cVR = id("canvasVR");
+  const cBC = id("canvasBC");
+  const cDG = id("canvasDG");
+  return {
+    canvasVR: cVR,
+    ctxVR: cVR.getContext("2d"),
+    canvasBC: cBC,
+    ctxBC: cBC.getContext("2d"),
+    canvasDG: cDG,
+    ctxDG: cDG.getContext("2d"),
+    diagramDetails: id("diagramDetails"),
+    barcodeStatus: id("barcodeStatus"),
+    modelSelect: id("modelSelect"),
+    loadModelBtn: id("loadModelBtn"),
+    customPointCloudPanel: id("customPointCloudPanel"),
+    customPointsInput: id("customPointsInput"),
+    customPointsError: id("customPointsError"),
+    pointCountLabel: id("pointCountLabel"),
+    pointCountRow: id("pointCountRow"),
+    pointCountHint: id("pointCountHint"),
+    pointCountSlider: id("pointCountSlider"),
+    pointCountInput: id("pointCountInput"),
+    persistBlock:
+      suffix === ""
+        ? document.getElementById("persistCol")
+        : document.querySelector(`[data-persist-col="${suffix}"]`),
+  };
+}
+
+const singleDom = domFromSuffix("");
+const compareDom = [domFromSuffix("0"), domFromSuffix("1")];
+
+function getSlotDom(slotIndex) {
+  if (!compareMode) return singleDom;
+  return compareDom[slotIndex];
+}
+
+function applySlot(slotIndex) {
+  activeSlotIndex = slotIndex;
+  const s = slots[slotIndex];
+  const dom = getSlotDom(slotIndex);
+  points = s.points;
+  pointCount = s.pointCount;
+  pointCloudModel = s.pointCloudModel;
+  persistence = s.persistence;
+  maxFilt = s.maxFilt;
+  view = s.view;
+  hoveredInterval = s.hoveredInterval;
+  lastHoverKey = s.lastHoverKey;
+  barcodeHitTargets = s.barcodeHitTargets;
+  diagramHitTargets = s.diagramHitTargets;
+  diagramOverlapGroups = s.diagramOverlapGroups;
+  canvasVR = dom.canvasVR;
+  ctxVR = dom.ctxVR;
+  canvasBC = dom.canvasBC;
+  ctxBC = dom.ctxBC;
+  canvasDG = dom.canvasDG;
+  ctxDG = dom.ctxDG;
+  diagramDetails = dom.diagramDetails;
+  barcodeStatus = dom.barcodeStatus;
+  modelSelect = dom.modelSelect;
+  loadModelBtn = dom.loadModelBtn;
+  customPointCloudPanel = dom.customPointCloudPanel;
+  customPointsInput = dom.customPointsInput;
+  customPointsError = dom.customPointsError;
+  pointCountLabel = dom.pointCountLabel;
+  pointCountRow = dom.pointCountRow;
+  pointCountHint = dom.pointCountHint;
+  pointCountSlider = dom.pointCountSlider;
+  pointCountInput = dom.pointCountInput;
+  persistCol = dom.persistBlock;
+}
+
+function getActiveScaleEls() {
+  if (compareMode) {
+    return {
+      slider: scaleSliderCmp,
+      input: scaleInputCmp,
+      hint: scaleRangeHintCmp,
+      animate: animateEpsilonCmp,
+    };
+  }
+  return { slider, input: scaleInput, hint: scaleRangeHint, animate: animateEpsilon };
+}
+
+function syncScaleInputs(n) {
+  const formatted = formatScale(n);
+  slider.value = scaleSliderCmp.value = String(n);
+  scaleInput.value = scaleInputCmp.value = formatted;
+}
+
+function setAllLoadButtonsDisabled(disabled) {
+  document.querySelectorAll("[id^='loadModelBtn']").forEach((btn) => {
+    btn.disabled = disabled;
+  });
+}
 
 function dist(i, j) {
   const dx = points[i].x - points[j].x;
@@ -561,8 +1630,6 @@ function triKey(i, j, k) {
 function filt(i, j) {
   return dist(i, j) / 2;
 }
-
-let maxFilt = 0;
 
 function recomputeMaxFilt() {
   maxFilt = 0;
@@ -896,28 +1963,49 @@ function triMatches(tri, i, j, k) {
   return triKey(...tri) === key;
 }
 
-function formatInterval(iv) {
-  const fmt = (x) => (x == null ? "∞" : x.toFixed(1));
+function formatIntervalTex(iv) {
+  const fmtEps = (x) => (x == null ? "\\infty" : x.toFixed(1));
   const bv = iv.birthVerts ? iv.birthVerts.join(", ") : "?";
-  const dv = iv.deathVerts ? iv.deathVerts.join(", ") : "∞";
+  const dv = iv.deathVerts ? iv.deathVerts.join(", ") : "\\infty";
+  const epsInterval = `\\varepsilon \\in [${fmtEps(iv.birth)}, ${fmtEps(iv.death)})`;
   if (iv.dim === 0) {
-    return `H₀ merge: vertex (${bv}) dies at edge (${dv}). ε ∈ [${fmt(iv.birth)}, ${fmt(iv.death)}).`;
+    return `H_0\\text{: merge at vertex }(${bv}),\\ \\text{dies at edge }(${dv}).\\quad ${epsInterval}`;
   }
   if (iv.dim === 1) {
-    return `H₁ loop: born at edge (${bv}), dies at triangle (${dv}). ε ∈ [${fmt(iv.birth)}, ${fmt(iv.death)}).`;
+    return `H_1\\text{: born at edge }(${bv}),\\ \\text{dies at triangle }(${dv}).\\quad ${epsInterval}`;
   }
-  return (
-    `H₂ void: purple triangle = birth (${bv}); ` +
-    `purple hull + 6 edges = death 4-clique (${dv}). ε ∈ [${fmt(iv.birth)}, ${fmt(iv.death)}).`
-  );
+  return `H_2\\text{: birth triangle }(${bv});\\ \\text{death tetrahedron }(${dv}).\\quad ${epsInterval}`;
 }
 
-function showBcTooltip(iv, clientX, clientY) {
+function diagramDataKey(iv) {
+  const deathPart = iv.death == null ? "inf" : iv.death.toFixed(8);
+  return `${iv.birth.toFixed(8)}:${deathPart}`;
+}
+
+function showBcTooltip(iv, overlaps, clientX, clientY) {
   if (!iv) {
     bcTooltip.style.display = "none";
     return;
   }
-  bcTooltip.textContent = formatInterval(iv);
+  const list = overlaps && overlaps.length ? overlaps : [iv];
+  const deathFmt = iv.death == null ? "\\infty" : iv.death.toFixed(1);
+  let html;
+  if (list.length > 1) {
+    html =
+      renderTex(
+        `${list.length}\\text{ points coincide at }(b=${iv.birth.toFixed(1)},\\ d=${deathFmt}).`,
+        true
+      ) +
+      list
+        .map(
+          (item, idx) =>
+            `<div class="tooltip-interval">${idx + 1}. ${renderTex(formatIntervalTex(item))}</div>`
+        )
+        .join("");
+  } else {
+    html = renderTex(formatIntervalTex(iv));
+  }
+  bcTooltip.innerHTML = html;
   bcTooltip.style.display = "block";
   bcTooltip.style.left = `${clientX + 14}px`;
   bcTooltip.style.top = `${clientY + 14}px`;
@@ -927,16 +2015,82 @@ function hideBcTooltip() {
   bcTooltip.style.display = "none";
 }
 
-function drawBarcode({ intervals, maxFilt: mFilt }, currentEps, hoverIv) {
+function persistPlotLayout(canvas, mFilt) {
   const m = Math.max(mFilt || maxFilt, 1e-6);
+  const plotW = canvas.width - PERSIST_PAD_L - PERSIST_PAD_R;
+  const plotH = canvas.height - PERSIST_PAD_T - PERSIST_PAD_B;
+  const toX = (v) => PERSIST_PAD_L + plotW * (clamp(v, 0, m) / m);
+  const toY = (v) => PERSIST_PAD_T + plotH - plotH * (clamp(v, 0, m) / m);
+  return {
+    m,
+    plotW,
+    plotH,
+    padL: PERSIST_PAD_L,
+    padT: PERSIST_PAD_T,
+    toX,
+    toY,
+  };
+}
+
+function drawPersistAxes(ctx, canvas, layout) {
+  const { m, plotW, plotH, padL, padT, toX, toY } = layout;
+  ctx.strokeStyle = "#dde2e8";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padL, padT);
+  ctx.lineTo(padL, padT + plotH);
+  ctx.lineTo(padL + plotW, padT + plotH);
+  ctx.stroke();
+
+  ctx.strokeStyle = "#6b7280";
+  ctx.lineWidth = 1.25;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath();
+  ctx.moveTo(toX(0), toY(0));
+  ctx.lineTo(toX(m), toY(m));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = "#666";
+  ctx.font = "11px Segoe UI, system-ui, sans-serif";
+  ctx.textAlign = "center";
+  for (let t = 0; t <= 4; t++) {
+    const v = (m * t) / 4;
+    ctx.fillText(v.toFixed(1), toX(v), padT + plotH + 16);
+  }
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  for (let t = 0; t <= 4; t++) {
+    const v = (m * t) / 4;
+    ctx.fillText(v.toFixed(1), padL - 8, toY(v));
+  }
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+}
+
+function drawPersistEpsilonGuides(ctx, layout, eps) {
+  const { plotH, padL, padT, toX, toY } = layout;
+  const epsX = toX(eps);
+  const epsY = toY(eps);
+  ctx.strokeStyle = "#e67e22";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.moveTo(epsX, padT);
+  ctx.lineTo(epsX, padT + plotH);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(padL, epsY);
+  ctx.lineTo(padL + layout.plotW, epsY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawBarcode({ intervals, maxFilt: mFilt }, currentEps, hoverIv) {
+  const layout = persistPlotLayout(canvasBC, mFilt);
+  const m = layout.m;
   const eps = clamp(currentEps, 0, m);
-  const padL = 48;
-  const padR = 12;
-  const padT = 32;
-  const padB = 40;
-  const plotW = canvasBC.width - padL - padR;
-  const plotH = canvasBC.height - padT - padB;
-  const toX = (v) => padL + plotW * (clamp(v, 0, m) / m);
+  const { plotW, plotH, padL, padT, toX } = layout;
 
   ctxBC.fillStyle = "#fff";
   ctxBC.fillRect(0, 0, canvasBC.width, canvasBC.height);
@@ -959,18 +2113,16 @@ function drawBarcode({ intervals, maxFilt: mFilt }, currentEps, hoverIv) {
   dims.forEach((dim, bandIdx) => {
     const bandTop = padT + bandH * bandIdx;
     const bandBottom = bandTop + bandH;
-    const yMid = bandTop + bandH / 2;
     const rows = byDim[dim];
     const rowCount = Math.max(rows.length, 1);
     const innerPad = 3;
     const usableH = bandH - 2 * innerPad - rowGap * Math.max(0, rowCount - 1);
-    const barH = Math.max(2, usableH / rowCount);
-
-    ctxBC.fillStyle = "#1a3a5c";
-    ctxBC.font = "12px Segoe UI, system-ui, sans-serif";
-    ctxBC.textAlign = "right";
-    ctxBC.textBaseline = "middle";
-    ctxBC.fillText(`H${dim}`, padL - 8, yMid);
+    const barH = Math.min(
+      BC_BAR_MAX_HEIGHT,
+      Math.max(2, usableH / rowCount)
+    );
+    const stackH = rowCount * barH + rowGap * Math.max(0, rowCount - 1);
+    const bandInnerTop = bandTop + innerPad + (usableH - stackH) / 2;
 
     ctxBC.strokeStyle = "#eef1f4";
     ctxBC.beginPath();
@@ -984,7 +2136,7 @@ function drawBarcode({ intervals, maxFilt: mFilt }, currentEps, hoverIv) {
       const alive = aliveAtEps(iv, eps);
       if (alive) counts[dim]++;
 
-      const y0 = bandTop + innerPad + rowIdx * (barH + rowGap);
+      const y0 = bandInnerTop + rowIdx * (barH + rowGap);
       const isHover = hoverIv && intervalHoverKey(hoverIv) === intervalHoverKey(iv);
 
       barcodeHitTargets.push({
@@ -1022,19 +2174,128 @@ function drawBarcode({ intervals, maxFilt: mFilt }, currentEps, hoverIv) {
     const v = (m * t) / 4;
     ctxBC.fillText(v.toFixed(1), toX(v), padT + plotH + 16);
   }
-  ctxBC.textAlign = "left";
-  ctxBC.fillText("ε (disk radius)", padL + plotW / 2 - 34, canvasBC.height - 8);
-  ctxBC.fillText(
-    `alive at ε=${eps.toFixed(SCALE_DECIMALS)}: H₀=${counts[0]}, H₁=${counts[1]}, H₂=${counts[2]}`,
-    padL,
-    16
-  );
+  updateHomologyBandLabels(canvasBC, layout);
+  updateAlivePlotStatus(canvasBC, eps, counts);
+  slots[activeSlotIndex].barcodeHitTargets = barcodeHitTargets;
+}
+
+function drawInfinityMarker(ctx, cx, cy, size, fill, stroke, width) {
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - size);
+  ctx.lineTo(cx + size, cy + size * 0.65);
+  ctx.lineTo(cx - size, cy + size * 0.65);
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = width;
+  ctx.stroke();
+}
+
+function drawPersistenceDiagram({ intervals, maxFilt: mFilt }, currentEps, hoverIv) {
+  const layout = persistPlotLayout(canvasDG, mFilt);
+  const m = layout.m;
+  const eps = clamp(currentEps, 0, m);
+  const { toX, toY } = layout;
+
+  ctxDG.fillStyle = "#fff";
+  ctxDG.fillRect(0, 0, canvasDG.width, canvasDG.height);
+
+  drawPersistAxes(ctxDG, canvasDG, layout);
+  drawPersistEpsilonGuides(ctxDG, layout, eps);
+
+  diagramHitTargets = [];
+  diagramOverlapGroups = new Map();
+  const counts = { 0: 0, 1: 0, 2: 0 };
+  const hoverKey = hoverIv ? diagramDataKey(hoverIv) : null;
+
+  for (const iv of intervals) {
+    const groupKey = diagramDataKey(iv);
+    if (!diagramOverlapGroups.has(groupKey)) diagramOverlapGroups.set(groupKey, []);
+    diagramOverlapGroups.get(groupKey).push(iv);
+
+    const alive = aliveAtEps(iv, eps);
+    if (alive) counts[iv.dim]++;
+
+    const isInfinite = iv.death == null;
+    const cx = toX(iv.birth);
+    const cy = isInfinite ? layout.padT + 10 : toY(iv.death);
+    const isHover = hoverKey === groupKey;
+    const r = isHover ? 6.5 : 4.5;
+
+    diagramHitTargets.push({ interval: iv, cx, cy, r, groupKey });
+
+    ctxDG.globalAlpha = alive ? 1 : 0.35;
+    const fill = BC_COLORS[iv.dim];
+    const stroke = isHover ? "#1a3a5c" : fill;
+
+    if (isInfinite) {
+      drawInfinityMarker(
+        ctxDG,
+        cx,
+        cy,
+        isHover ? 7 : 5.5,
+        fill,
+        stroke,
+        isHover ? 2.5 : 1.5
+      );
+    } else {
+      ctxDG.fillStyle = fill;
+      ctxDG.beginPath();
+      ctxDG.arc(cx, cy, r, 0, 2 * Math.PI);
+      ctxDG.fill();
+      ctxDG.strokeStyle = stroke;
+      ctxDG.lineWidth = isHover ? 2.5 : 1.25;
+      ctxDG.stroke();
+    }
+    ctxDG.globalAlpha = 1;
+  }
+
+  updateAlivePlotStatus(canvasDG, eps, counts);
+  slots[activeSlotIndex].diagramHitTargets = diagramHitTargets;
+  slots[activeSlotIndex].diagramOverlapGroups = diagramOverlapGroups;
+}
+
+function hitTestDiagram(mx, my) {
+  for (let i = diagramHitTargets.length - 1; i >= 0; i--) {
+    const h = diagramHitTargets[i];
+    const dx = mx - h.cx;
+    const dy = my - h.cy;
+    if (dx * dx + dy * dy <= (h.r + 5) * (h.r + 5)) {
+      const overlaps = diagramOverlapGroups.get(h.groupKey) || [h.interval];
+      return { interval: h.interval, overlaps };
+    }
+  }
+  return null;
+}
+
+function getBarcodeStatusEl(slotIndex) {
+  return getSlotDom(slotIndex).barcodeStatus;
+}
+
+function setBarcodeStatus(slotIndex, { tex, text, error = false } = {}) {
+  const el = getBarcodeStatusEl(slotIndex);
+  if (!el) return;
+  el.classList.toggle("error", error);
+  if (tex) setMathHtml(el, tex);
+  else if (text) el.textContent = text;
+}
+
+function syncBarcodeStatusFromSlot(slotIndex) {
+  const p = slots[slotIndex].persistence;
+  if (!p || !Array.isArray(p.intervals)) return;
+  setBarcodeStatus(slotIndex, {
+    tex: `\\text{GUDHI: }${p.intervals.length}\\text{ intervals (max }\\varepsilon \\approx ${Math.round(p.maxFilt)})`,
+  });
 }
 
 async function fetchPersistence() {
-  barcodeStatus.classList.remove("error");
-  barcodeStatus.textContent = "Computing persistence with GUDHI…";
-  loadModelBtn.disabled = true;
+  const slotIndex = activeSlotIndex;
+  setBarcodeStatus(slotIndex, {
+    tex: "\\text{Computing persistence with GUDHI}\\ldots",
+    error: false,
+  });
+  setAllLoadButtonsDisabled(true);
 
   try {
     const res = await fetch("/api/persistence", {
@@ -1046,15 +2307,21 @@ async function fetchPersistence() {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     persistence = await res.json();
-    barcodeStatus.textContent = `GUDHI: ${persistence.intervals.length} intervals (max ε ≈ ${Math.round(persistence.maxFilt)})`;
+    slots[slotIndex].persistence = persistence;
+    setBarcodeStatus(slotIndex, {
+      tex: `\\text{GUDHI: }${persistence.intervals.length}\\text{ intervals (max }\\varepsilon \\approx ${Math.round(persistence.maxFilt)})`,
+    });
   } catch (err) {
     persistence = { intervals: [], maxFilt: maxFilt };
-    barcodeStatus.classList.add("error");
-    barcodeStatus.textContent =
-      "Could not reach GUDHI server. Run: python server.py then open http://127.0.0.1:8080";
+    slots[slotIndex].persistence = persistence;
+    setBarcodeStatus(slotIndex, {
+      text:
+        "Could not reach GUDHI server. Run: python server.py then open http://127.0.0.1:8080",
+      error: true,
+    });
     console.error(err);
   } finally {
-    loadModelBtn.disabled = false;
+    setAllLoadButtonsDisabled(false);
   }
 }
 
@@ -1252,11 +2519,11 @@ let animStartTime = 0;
 const slider = document.getElementById("scaleSlider");
 const scaleInput = document.getElementById("scaleInput");
 const scaleRangeHint = document.getElementById("scaleRangeHint");
-const loadModelBtn = document.getElementById("loadModelBtn");
-const modelSelect = document.getElementById("modelSelect");
-const pointCountSlider = document.getElementById("pointCountSlider");
-const pointCountInput = document.getElementById("pointCountInput");
+const scaleSliderCmp = document.getElementById("scaleSliderCmp");
+const scaleInputCmp = document.getElementById("scaleInputCmp");
+const scaleRangeHintCmp = document.getElementById("scaleRangeHintCmp");
 const animateEpsilon = document.getElementById("animateEpsilon");
+const animateEpsilonCmp = document.getElementById("animateEpsilonCmp");
 
 function clamp(v, min, max) {
   return Math.min(max, Math.max(min, v));
@@ -1274,32 +2541,38 @@ function formatScale(v) {
 }
 
 function setScaleRadius(v, doUpdate = true) {
-  const min = parseFloat(slider.min);
-  const max = parseFloat(slider.max);
+  const { slider: sl, input: inp } = getActiveScaleEls();
+  const min = parseFloat(sl.min);
+  const max = parseFloat(sl.max);
   const raw = roundScale(v);
   if (Number.isNaN(raw)) {
-    scaleInput.value = formatScale(parseFloat(slider.value));
+    inp.value = formatScale(parseFloat(sl.value));
     return;
   }
   const n = clamp(raw, min, max);
-  slider.value = String(n);
-  scaleInput.value = formatScale(n);
+  syncScaleInputs(n);
+  inp.min = MIN_RADIUS;
+  inp.max = max;
+  inp.step = String(SCALE_STEP);
   scaleInput.min = MIN_RADIUS;
   scaleInput.max = max;
-  scaleInput.step = String(SCALE_STEP);
+  scaleInputCmp.min = MIN_RADIUS;
+  scaleInputCmp.max = max;
   if (doUpdate) update();
 }
 
 function applyPointCount(v, resample = true) {
+  if (pointCloudModel === "custom") return;
   const raw = Math.round(Number(v));
   if (Number.isNaN(raw)) {
     pointCountInput.value = pointCount;
     return;
   }
   pointCount = clamp(raw, MIN_POINTS, MAX_POINTS);
+  slots[activeSlotIndex].pointCount = pointCount;
   pointCountSlider.value = String(pointCount);
   pointCountInput.value = pointCount;
-  if (resample) reloadPointCloud();
+  if (resample) reloadSlot(activeSlotIndex);
 }
 
 function distributeAmong(parts, total) {
@@ -1403,22 +2676,96 @@ function generateModelPoints(model, n) {
   }
 }
 
-function reloadPointCloud() {
+function parseCustomPointCloud(text) {
+  const lines = text.split(/\n/);
+  const pts = [];
+  const errors = [];
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i].trim();
+    if (!raw || raw.startsWith("#")) continue;
+    const parts = raw.split(/[\s,;]+/).filter(Boolean);
+    if (parts.length < 2) {
+      errors.push(`Line ${i + 1}: expected x and y.`);
+      continue;
+    }
+    const x = parseFloat(parts[0]);
+    const y = parseFloat(parts[1]);
+    if (Number.isNaN(x) || Number.isNaN(y)) {
+      errors.push(`Line ${i + 1}: invalid number.`);
+      continue;
+    }
+    pts.push({ x, y });
+  }
+  return { points: pts, errors };
+}
+
+function showCustomPointsError(message) {
+  customPointsError.textContent = message;
+  customPointsError.hidden = !message;
+}
+
+function syncCustomPointCloudUi() {
+  const isCustom = modelSelect.value === "custom";
+  customPointCloudPanel.hidden = !isCustom;
+  pointCountSlider.disabled = isCustom;
+  pointCountInput.disabled = isCustom;
+  pointCountRow.classList.toggle("point-count-disabled", isCustom);
+  pointCountHint.textContent = isCustom
+    ? "Point count follows your custom list."
+    : "5–30 vertices";
+  loadModelBtn.textContent = isCustom ? "Apply coordinates" : "Load point cloud";
+  if (!isCustom) showCustomPointsError("");
+}
+
+function loadCustomPointCloud() {
+  const { points: parsed, errors } = parseCustomPointCloud(customPointsInput.value);
+  if (errors.length) {
+    showCustomPointsError(errors.join(" "));
+    return;
+  }
+  if (parsed.length < MIN_POINTS) {
+    showCustomPointsError(`Need at least ${MIN_POINTS} points (got ${parsed.length}).`);
+    return;
+  }
+  if (parsed.length > MAX_POINTS) {
+    showCustomPointsError(`Maximum ${MAX_POINTS} points (got ${parsed.length}).`);
+    return;
+  }
+  stopAnimation();
+  points.length = 0;
+  for (const p of parsed) points.push(p);
+  pointCloudModel = "custom";
+  slots[activeSlotIndex].pointCloudModel = "custom";
+  pointCount = points.length;
+  pointCountSlider.value = String(pointCount);
+  pointCountInput.value = pointCount;
+  modelSelect.value = "custom";
+  showCustomPointsError("");
+  finishPointCloudReload();
+}
+
+function reloadSlot(slotIndex) {
+  applySlot(slotIndex);
   stopAnimation();
   points.length = 0;
   const generated = generateModelPoints(pointCloudModel, pointCount);
   for (const p of generated) points.push(p);
   pointCount = points.length;
+  slots[slotIndex].pointCount = pointCount;
   pointCountSlider.value = String(pointCount);
   pointCountInput.value = pointCount;
   modelSelect.value = pointCloudModel;
-  finishPointCloudReload();
+  syncCustomPointCloudUi();
+  return finishPointCloudReload();
 }
 
 async function finishPointCloudReload() {
   fitViewToCloud();
   recomputeMaxFilt();
+  slots[activeSlotIndex].maxFilt = maxFilt;
   configureRadiusSlider();
+  slots[activeSlotIndex].hoveredInterval = null;
+  slots[activeSlotIndex].lastHoverKey = "";
   hoveredInterval = null;
   lastHoverKey = "";
   hideBcTooltip();
@@ -1427,38 +2774,135 @@ async function finishPointCloudReload() {
 }
 
 function loadSelectedModel() {
+  if (modelSelect.value === "custom") {
+    loadCustomPointCloud();
+    return;
+  }
   pointCloudModel = modelSelect.value;
-  reloadPointCloud();
+  slots[activeSlotIndex].pointCloudModel = pointCloudModel;
+  reloadSlot(activeSlotIndex);
+}
+
+function onDiagramToggle(slotIndex) {
+  applySlot(slotIndex);
+  if (!diagramDetails.open) {
+    slots[slotIndex].lastHoverKey = "";
+    slots[slotIndex].hoveredInterval = null;
+    hideBcTooltip();
+    canvasDG.classList.remove("hit-active");
+  } else {
+    renderPageMath(diagramDetails);
+  }
+  redrawAll();
+}
+
+function wireSlotControls(dom, slotIndex) {
+  dom.loadModelBtn.addEventListener("click", () => {
+    applySlot(slotIndex);
+    loadSelectedModel();
+  });
+  dom.modelSelect.addEventListener("change", () => {
+    applySlot(slotIndex);
+    if (dom.modelSelect.value !== "custom") {
+      slots[slotIndex].pointCloudModel = dom.modelSelect.value;
+    }
+    syncCustomPointCloudUi();
+  });
+  dom.pointCountSlider.addEventListener("input", () => {
+    applySlot(slotIndex);
+    applyPointCount(dom.pointCountSlider.value);
+  });
+  dom.pointCountInput.addEventListener("change", () => {
+    applySlot(slotIndex);
+    applyPointCount(dom.pointCountInput.value);
+  });
+  dom.pointCountInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      applySlot(slotIndex);
+      applyPointCount(dom.pointCountInput.value);
+    }
+  });
+  dom.diagramDetails.addEventListener("toggle", () => onDiagramToggle(slotIndex));
+}
+
+function wirePersistHover(dom, slotIndex) {
+  dom.persistBlock.addEventListener("mousemove", (e) => handlePersistMouseMove(e, slotIndex));
+  dom.persistBlock.addEventListener("mouseleave", () => handlePersistMouseLeave(slotIndex));
+}
+
+function wireScaleControl(sl, inp) {
+  sl.addEventListener("input", () => {
+    if (animating) stopAnimation(false);
+    setScaleRadius(sl.value);
+  });
+  inp.addEventListener("change", () => {
+    if (animating) stopAnimation(false);
+    setScaleRadius(inp.value);
+  });
+  inp.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") setScaleRadius(inp.value);
+  });
+}
+
+async function setCompareMode(enabled) {
+  if (enabled === compareMode) return;
+  compareMode = enabled;
+  document.body.classList.toggle("compare-active", enabled);
+  layoutCompare.hidden = !enabled;
+  compareModeToggle.checked = enabled;
+  hideBcTooltip();
+  if (enabled) {
+    syncScaleInputs(parseFloat(slider.value));
+    syncBarcodeStatusFromSlot(0);
+    applySlot(1);
+    await reloadSlot(1);
+    renderPageMath(layoutCompare);
+  } else {
+    syncScaleInputs(parseFloat(scaleSliderCmp.value));
+    applySlot(0);
+    syncBarcodeStatusFromSlot(0);
+    configureRadiusSlider();
+  }
+  redrawAll();
 }
 
 function configureRadiusSlider() {
+  const mF = compareMode
+    ? Math.max(slots[0].maxFilt, slots[1].maxFilt)
+    : slots[0].maxFilt;
   const maxR = Math.max(
     MIN_RADIUS + SCALE_STEP,
-    Math.ceil(maxFilt / SCALE_STEP) * SCALE_STEP
+    Math.ceil(mF / SCALE_STEP) * SCALE_STEP
   );
-  slider.min = String(MIN_RADIUS);
-  slider.max = String(maxR);
-  slider.step = String(SCALE_STEP);
-  scaleInput.min = MIN_RADIUS;
-  scaleInput.max = maxR;
-  scaleInput.step = SCALE_STEP;
-  scaleRangeHint.textContent = `${MIN_RADIUS}–${maxR.toFixed(SCALE_DECIMALS)}`;
+  slider.min = scaleSliderCmp.min = String(MIN_RADIUS);
+  slider.max = scaleSliderCmp.max = String(maxR);
+  slider.step = scaleSliderCmp.step = String(SCALE_STEP);
+  scaleInput.min = scaleInputCmp.min = MIN_RADIUS;
+  scaleInput.max = scaleInputCmp.max = maxR;
+  scaleInput.step = scaleInputCmp.step = SCALE_STEP;
+  const hint = `${MIN_RADIUS}–${maxR.toFixed(SCALE_DECIMALS)}`;
+  scaleRangeHint.textContent = hint;
+  scaleRangeHintCmp.textContent = hint;
   setScaleRadius(MIN_RADIUS, false);
 }
 
 function stopAnimation(keepCheckbox) {
   animating = false;
-  if (!keepCheckbox) animateEpsilon.checked = false;
+  if (!keepCheckbox) {
+    animateEpsilon.checked = false;
+    animateEpsilonCmp.checked = false;
+  }
   slider.disabled = false;
   scaleInput.disabled = false;
+  scaleSliderCmp.disabled = false;
+  scaleInputCmp.disabled = false;
   if (animFrameId !== null) {
     cancelAnimationFrame(animFrameId);
     animFrameId = null;
   }
 }
 
-function redrawCanvases() {
-  const radius = parseFloat(slider.value);
+function redrawSlotCanvases(radius) {
   const highlight = highlightsFromInterval(hoveredInterval);
   try {
     drawVR(
@@ -1472,36 +2916,85 @@ function redrawCanvases() {
     console.error("drawVR failed:", err);
   }
   drawBarcode(persistence, radius, hoveredInterval);
+  if (diagramDetails.open) {
+    drawPersistenceDiagram(persistence, radius, hoveredInterval);
+  }
 }
 
-function onBcMouseMove(e) {
-  const { x, y } = canvasCoords(canvasBC, e.clientX, e.clientY);
-  const hit = hitTestBarcode(x, y);
+function redrawAll() {
+  const { slider: sl } = getActiveScaleEls();
+  const radius = parseFloat(sl.value);
+  const indices = compareMode ? [0, 1] : [0];
+  for (const i of indices) {
+    applySlot(i);
+    redrawSlotCanvases(radius);
+  }
+}
+
+function handlePersistMouseMove(e, slotIndex) {
+  applySlot(slotIndex);
+  let hit = null;
+  let overlaps = [];
+  const bcRect = canvasBC.getBoundingClientRect();
+  const dgRect = canvasDG.getBoundingClientRect();
+  const onBc =
+    e.clientX >= bcRect.left &&
+    e.clientX <= bcRect.right &&
+    e.clientY >= bcRect.top &&
+    e.clientY <= bcRect.bottom;
+  const onDg =
+    e.clientX >= dgRect.left &&
+    e.clientX <= dgRect.right &&
+    e.clientY >= dgRect.top &&
+    e.clientY <= dgRect.bottom;
+
+  if (onBc) {
+    const { x, y } = canvasCoords(canvasBC, e.clientX, e.clientY);
+    hit = hitTestBarcode(x, y);
+    if (hit) overlaps = [hit];
+  }
+  if (!hit && onDg && diagramDetails.open) {
+    const { x, y } = canvasCoords(canvasDG, e.clientX, e.clientY);
+    const dgHit = hitTestDiagram(x, y);
+    if (dgHit) {
+      hit = dgHit.interval;
+      overlaps = dgHit.overlaps;
+    }
+  }
+
   const key = intervalHoverKey(hit);
-  canvasBC.classList.toggle("hit-active", !!hit);
-  showBcTooltip(hit, e.clientX, e.clientY);
+  canvasBC.classList.toggle("hit-active", !!hit && onBc);
+  canvasDG.classList.toggle("hit-active", !!hit && onDg);
+  showBcTooltip(hit, overlaps, e.clientX, e.clientY);
   if (key === lastHoverKey) return;
+  slots[slotIndex].lastHoverKey = key;
+  slots[slotIndex].hoveredInterval = hit;
   lastHoverKey = key;
   hoveredInterval = hit;
-  redrawCanvases();
+  redrawAll();
 }
 
-function onBcMouseLeave() {
+function handlePersistMouseLeave(slotIndex) {
+  applySlot(slotIndex);
+  slots[slotIndex].lastHoverKey = "";
+  slots[slotIndex].hoveredInterval = null;
   lastHoverKey = "";
   hoveredInterval = null;
   canvasBC.classList.remove("hit-active");
+  canvasDG.classList.remove("hit-active");
   hideBcTooltip();
-  redrawCanvases();
+  redrawAll();
 }
 
 function update() {
-  redrawCanvases();
+  redrawAll();
 }
 
 function animationTick(now) {
   if (!animating) return;
-  const min = parseFloat(slider.min);
-  const max = parseFloat(slider.max);
+  const { slider: sl } = getActiveScaleEls();
+  const min = parseFloat(sl.min);
+  const max = parseFloat(sl.max);
   const t = ((now - animStartTime) % ANIM_PERIOD_MS) / ANIM_PERIOD_MS;
   const radius = min + (max - min) * t;
   setScaleRadius(radius, true);
@@ -1511,42 +3004,69 @@ function animationTick(now) {
 function startAnimation() {
   stopAnimation(true);
   animating = true;
-  slider.disabled = true;
-  scaleInput.disabled = true;
+  slider.disabled = scaleSliderCmp.disabled = true;
+  scaleInput.disabled = scaleInputCmp.disabled = true;
+  const { slider: sl } = getActiveScaleEls();
   animStartTime = performance.now();
-  setScaleRadius(slider.min, true);
+  setScaleRadius(sl.min, true);
   animFrameId = requestAnimationFrame(animationTick);
 }
 
-loadModelBtn.addEventListener("click", loadSelectedModel);
-pointCountSlider.addEventListener("input", () => {
-  applyPointCount(pointCountSlider.value);
-});
-pointCountInput.addEventListener("change", () => {
-  applyPointCount(pointCountInput.value);
-});
-pointCountInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") applyPointCount(pointCountInput.value);
-});
-slider.addEventListener("input", () => {
-  if (animating) stopAnimation(false);
-  setScaleRadius(slider.value);
-});
-scaleInput.addEventListener("change", () => {
-  if (animating) stopAnimation(false);
-  setScaleRadius(scaleInput.value);
-});
-scaleInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") setScaleRadius(scaleInput.value);
-});
-animateEpsilon.addEventListener("change", () => {
-  if (animateEpsilon.checked) startAnimation();
-  else stopAnimation();
-});
-canvasBC.addEventListener("mousemove", onBcMouseMove);
-canvasBC.addEventListener("mouseleave", onBcMouseLeave);
+wireSlotControls(singleDom, 0);
+wireSlotControls(compareDom[0], 0);
+wireSlotControls(compareDom[1], 1);
+wirePersistHover(singleDom, 0);
+wirePersistHover(compareDom[0], 0);
+wirePersistHover(compareDom[1], 1);
 
-reloadPointCloud();
+wireScaleControl(slider, scaleInput);
+wireScaleControl(scaleSliderCmp, scaleInputCmp);
+
+animateEpsilon.addEventListener("change", () => {
+  if (animateEpsilon.checked) {
+    animateEpsilonCmp.checked = true;
+    startAnimation();
+  } else {
+    animateEpsilonCmp.checked = false;
+    stopAnimation();
+  }
+});
+animateEpsilonCmp.addEventListener("change", () => {
+  if (animateEpsilonCmp.checked) {
+    animateEpsilon.checked = true;
+    startAnimation();
+  } else {
+    animateEpsilon.checked = false;
+    stopAnimation();
+  }
+});
+
+compareModeToggle.addEventListener("change", () => {
+  setCompareMode(compareModeToggle.checked);
+});
+
+const changelogDialog = document.getElementById("changelogDialog");
+const changelogOpen = document.getElementById("changelogOpen");
+const changelogClose = document.getElementById("changelogClose");
+changelogOpen.addEventListener("click", () => {
+  changelogDialog.showModal();
+  renderPageMath(changelogDialog);
+});
+changelogClose.addEventListener("click", () => changelogDialog.close());
+changelogDialog.addEventListener("click", (e) => {
+  const rect = changelogDialog.getBoundingClientRect();
+  const inDialog =
+    e.clientX >= rect.left &&
+    e.clientX <= rect.right &&
+    e.clientY >= rect.top &&
+    e.clientY <= rect.bottom;
+  if (!inDialog) changelogDialog.close();
+});
+
+applySlot(0);
+renderPageMath();
+reloadSlot(0);
+syncCustomPointCloudUi();
 </script>
 </body>
 </html>
